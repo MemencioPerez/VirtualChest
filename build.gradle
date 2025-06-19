@@ -1,106 +1,58 @@
-buildscript {
-    repositories {
-        jcenter()
-        maven {
-            name = 'forge'
-            url = 'http://files.minecraftforge.net/maven'
-        }
-        maven {
-            name = 'minecrell'
-            url = 'http://repo.minecrell.net/releases'
-        }
-    }
-    dependencies {
-        classpath 'net.minecrell:VanillaGradle:2.0.3_1'
-        classpath 'org.javalite:activejdbc-gradle-plugin:1.4.13'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:4.0.4'
-        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.4'
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-    }
+plugins {
+    id 'java'
+    id 'maven-publish'
+    id 'de.schablinski.activejdbc-gradle-plugin' version '2.0.1'
+    id 'com.gradleup.shadow' version '9.0.0-beta17'
+    id 'xyz.jpenilla.run-paper' version '2.3.1'
 }
-
-apply plugin: 'java'
-apply plugin: 'maven-publish'
-apply plugin: 'com.jfrog.bintray'
-apply plugin: 'org.javalite.activejdbc'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'net.minecrell.vanilla.server.library'
-
-sourceCompatibility = '1.8'
-targetCompatibility = '1.8'
 
 defaultTasks 'clean', 'build'
 
-def getProjectVersion = {
-    return 'git describe --abbrev=0 --tags'.execute().text.trim().substring(1) // drop the 'v' prefix
-}
-
-def getProjectGitHash = {
-    return 'git rev-parse --short HEAD'.execute().text.trim()
-}
-
-def getProjectReleaseDate = {
-    // noinspection UnnecessaryQualifiedReference
-    return new java.util.Date(Long.valueOf('git show -s --format=%ct'.execute().text.trim()) * 1000)
-}
-
 repositories {
-    jcenter()
+    mavenCentral()
     maven {
-        name = 'sponge'
-        url = 'http://repo.spongepowered.org/maven'
+        name = "spigotmc-repo"
+        url = "https://hub.spigotmc.org/nexus/content/repositories/snapshots/"
     }
     maven {
-        name = 'jitpack'
+        name = "sonatype"
+        url = "https://oss.sonatype.org/content/groups/public/"
+    }
+    maven {
         url = 'https://jitpack.io'
     }
-}
-
-version = getProjectVersion()
-group = 'com.github.ustc_zzzz'
-archivesBaseName = 'VirtualChest'
-
-minecraft {
-    version = '1.12.2'
-    mappings = 'snapshot_20171003'
-
-    replace '@version@', project.version
-    replace '@git_hash@', getProjectGitHash()
-    replace '@release_date@', getProjectReleaseDate().with {
-        // noinspection UnnecessaryQualifiedReference
-        def format = new java.text.SimpleDateFormat('yyyy-MM-dd', Locale.ENGLISH) // RFC 3339
-        format.setTimeZone(TimeZone.getTimeZone('GMT+08:00')) // the author comes from China
-        return format.format(it)
+    maven {
+        url = 'https://repo.extendedclip.com/releases/'
+    }
+    maven {
+        name = "CodeMC"
+        url = 'https://repo.codemc.io/repository/maven-public/'
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = 'UTF-8'
-    options.compilerArgs << '-Xlint:all' // << '-Werror'
-}
-
-task apiJar(type: Jar, dependsOn: sourceJar) {
-    baseName = 'VirtualChestAPI'
-
-    from sourceSets.api.allSource
-    from sourceSets.api.output
-    from 'LICENSE'
-}
-
-artifacts {
-    archives apiJar
-    archives shadowJar
-    archives sourceJar
-}
+group = 'com.github.ustc_zzzz'
+version = '1.0.0-SNAPSHOT'
 
 dependencies {
-    compile 'org.javalite:activejdbc:1.4.13'
+    compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+    shadow 'org.javalite:activejdbc:1.4.13'
+    implementation 'me.clip:placeholderapi:2.11.6'
+    implementation 'com.github.MilkBowl:VaultAPI:1.7'
+    shadow 'org.spongepowered:configurate-hocon:3.7.3'
+    shadow 'org.bstats:bstats-base:3.1.0'
+    shadow 'org.bstats:bstats-bukkit:3.1.0'
+    shadow 'com.github.zafarkhaja:java-semver:0.10.2'
+    shadow 'com.github.spotbugs:spotbugs-annotations:4.9.3'
+    implementation 'de.tr7zw:item-nbt-api-plugin:2.11.0' // Added NBT-API
+    // JDBC Drivers for ActiveJDBC
+    shadow 'com.h2database:h2:2.2.224' // For H2 file database (default)
+    shadow 'org.xerial:sqlite-jdbc:3.46.0.0' // For SQLite
+    // MySQL driver can be added if direct support is desired, or let users add it.
+    // implementation 'mysql:mysql-connector-java:8.0.33'
+}
 
-    compile 'org.spongepowered:spongeapi:7.2.0'
-    compile 'org.spongepowered:spongecommon:1.12.2-7.2.0:dev'
-
-    compile 'com.github.ronaldburns:PlaceholderAPI:4.5.1'
-    compile 'com.github.randombyte-developer:byte-items:v2.4.1'
+java {
+    withSourcesJar()
 }
 
 sourceSets {
@@ -111,53 +63,83 @@ sourceSets {
     }
     api {
         java.srcDir 'api/'
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
     }
 }
 
-publishing {
-    publications {
-        maven(MavenPublication).artifact apiJar
-        maven(MavenPublication).artifactId 'VirtualChestAPI'
+tasks.register('apiJar', Jar) {
+    dependsOn sourcesJar
+    archivesBaseName = 'VirtualChestAPI'
+
+    from sourceSets.api.allSource
+    from sourceSets.api.output
+    from 'LICENSE'
+}
+
+artifacts {
+    archives apiJar
+    archives shadowJar
+    archives sourcesJar
+}
+
+def targetJavaVersion = 11
+java {
+    def javaVersion = JavaVersion.toVersion(targetJavaVersion)
+    sourceCompatibility = javaVersion
+    targetCompatibility = javaVersion
+    if (JavaVersion.current() < javaVersion) {
+        toolchain.languageVersion = JavaLanguageVersion.of(targetJavaVersion)
     }
 }
 
-bintray {
-    user = 'zzzz'
-    publications = ['maven']
-    key = project.hasProperty('bintrayApiKey') ? project.property('bintrayApiKey') : System.getenv('BINTRAY_API_KEY')
-    pkg {
-        repo = 'VirtualChest'
-        licenses = ['LGPL-3.0']
-        name = 'VirtualChestAPI'
-        vcsUrl = 'https://github.com/ustc-zzzz/VirtualChest.git'
-        version {
-            name = project.version
-            vcsTag = 'v' + project.version
-            released = getProjectReleaseDate()
-            desc = 'VirtualChestAPI v' + project.version
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:-options'
+
+    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
+        options.release.set(targetJavaVersion)
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    finalizedBy 'shadowJar'
+    manifest {
+        attributes(
+                'paperweight-mappings-namespace': 'mojang'
+        )
+    }
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    archiveClassifier = ''
+
+    relocate 'org.javalite', project.group.toString() + '.virtualchest.util.repackage.org.javalite'
+    relocate 'ninja.leaping.configurate', project.group.toString() + '.virtualchest.util.repackage.ninja.leaping.configurate'
+    relocate 'org.bstats', project.group.toString() + '.virtualchest.util.repackage.org.bstats'
+    relocate 'com.github.zafarkhaja.semver', project.group.toString() + '.virtualchest.util.repackage.com.github.zafarkhaja.semver'
+    relocate 'org.h2', project.group.toString() + '.virtualchest.util.repackage.org.h2' // H2 relocation
+    relocate 'org.sqlite', project.group.toString() + '.virtualchest.util.repackage.org.sqlite' // SQLite relocation
+    // relocate 'com.mysql', project.group.toString() + '.virtualchest.util.repackage.com.mysql' // MySQL relocation
+}
+
+tasks {
+    runServer {
+        minecraftVersion("1.16.5")
+        downloadPlugins {
+            hangar("placeholderapi", "2.11.6")
+            hangar("vaultunlocked", "2.12.0")
+            modrinth("nbtapi", "2.15.0")
         }
     }
 }
 
-jar {
-    classifier = 'pure'
-}
-
-shadowJar {
-    minimize()
-    classifier = null
-
-    dependencies {
-        it.include it.dependency('org.javalite:.*')
-    }
-
-    relocate 'org.javalite', project.group.toString() + '.virtualchest.util.repackage.org.javalite'
-}
-
-reobf {
-    jar {
-        mappingType = 'SEARGE'
+processResources {
+    def props = [version: version]
+    inputs.properties props
+    filteringCharset = 'UTF-8'
+    filesMatching('plugin.yml') {
+        expand props
     }
 }
-
-reobfJar.dependsOn shadowJar
