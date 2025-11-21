@@ -35,20 +35,20 @@ version = '1.0.0-SNAPSHOT'
 
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.16.5-R0.1-SNAPSHOT'
+    compileOnly 'com.google.guava:guava:31.1-jre'
+    shadow 'com.djaytan.bukkit:bukkit-slf4j:3.1.2'
     shadow 'org.javalite:activejdbc:1.4.13'
     implementation 'me.clip:placeholderapi:2.11.6'
     implementation 'com.github.MilkBowl:VaultAPI:1.7'
     shadow 'org.spongepowered:configurate-hocon:3.7.3'
+    shadow "net.kyori:adventure-platform-bukkit:4.4.0"
     shadow 'org.bstats:bstats-base:3.1.0'
     shadow 'org.bstats:bstats-bukkit:3.1.0'
     shadow 'com.github.zafarkhaja:java-semver:0.10.2'
     shadow 'com.github.spotbugs:spotbugs-annotations:4.9.3'
-    implementation 'de.tr7zw:item-nbt-api-plugin:2.11.0' // Added NBT-API
-    // JDBC Drivers for ActiveJDBC
-    shadow 'com.h2database:h2:2.2.224' // For H2 file database (default)
-    shadow 'org.xerial:sqlite-jdbc:3.46.0.0' // For SQLite
-    // MySQL driver can be added if direct support is desired, or let users add it.
-    // implementation 'mysql:mysql-connector-java:8.0.33'
+    implementation 'de.tr7zw:item-nbt-api-plugin:2.11.0'
+    shadow 'com.h2database:h2:2.2.224'
+    shadow 'org.mariadb.jdbc:mariadb-java-client:3.5.6'
 }
 
 java {
@@ -95,7 +95,7 @@ java {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.compilerArgs << '-Xlint:-options'
+    options.compilerArgs << '-Xlint:-options' << '-Xmaxerrs' << "500"
 
     if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
         options.release.set(targetJavaVersion)
@@ -117,6 +117,7 @@ shadowJar {
 
     relocate 'org.javalite', project.group.toString() + '.virtualchest.util.repackage.org.javalite'
     relocate 'ninja.leaping.configurate', project.group.toString() + '.virtualchest.util.repackage.ninja.leaping.configurate'
+    relocate 'net.kyori', project.group.toString() + '.virtualchest.util.repackage.net.kyori'
     relocate 'org.bstats', project.group.toString() + '.virtualchest.util.repackage.org.bstats'
     relocate 'com.github.zafarkhaja.semver', project.group.toString() + '.virtualchest.util.repackage.com.github.zafarkhaja.semver'
     relocate 'org.h2', project.group.toString() + '.virtualchest.util.repackage.org.h2' // H2 relocation
