@@ -9,8 +9,7 @@ import org.spongepowered.api.Sponge;
 /**
  * @author ustc_zzzz
  */
-public final class VirtualChestTimings
-{
+public final class VirtualChestTimings {
     /* Order:
      *
      * - updateAndRefreshMappings(name)
@@ -23,50 +22,41 @@ public final class VirtualChestTimings
      *       - deserializeItem
      */
 
-    public static Timing updateAndRefreshMappings(String name)
-    {
+    public static Timing updateAndRefreshMappings(String name) {
         return Timings.of(PLUGIN, "updateAndRefreshMappings - " + name);
     }
 
-    public static Timing updateAndRefreshMapping(String name, int i)
-    {
+    public static Timing updateAndRefreshMapping(String name, int i) {
         return Timings.of(PLUGIN, "updateAndRefreshMapping - " + VirtualChestInventory.slotIndexToKey(i) + " in " + name);
     }
 
-    public static Timing checkRequirements(String name, int i)
-    {
+    public static Timing checkRequirements(String name, int i) {
         return Timings.of(PLUGIN, "checkRequirements - " + VirtualChestInventory.slotIndexToKey(i) + " in " + name);
     }
 
-    public static Timing prepareRequirementBindings()
-    {
+    public static Timing prepareRequirementBindings() {
         return PREPARE_REQUIREMENT_BINDINGS;
     }
 
-    public static Timing executeRequirementScript()
-    {
+    public static Timing executeRequirementScript() {
         return EXECUTE_REQUIREMENT_SCRIPT;
     }
 
-    public static Timing setItemInInventory(String name, int i)
-    {
+    public static Timing setItemInInventory(String name, int i) {
         return Timings.of(PLUGIN, "setItemInInventory - " + VirtualChestInventory.slotIndexToKey(i) + " in " + name);
     }
 
-    public static Timing applyPlaceholders()
-    {
+    public static Timing applyPlaceholders() {
         return APPLY_PLACEHOLDERS;
     }
 
-    public static Timing deserializeItem()
-    {
+    public static Timing deserializeItem() {
         return DESERIALIZE_ITEM;
     }
 
     private static final Object PLUGIN;
 
-    static
-    {
+    static {
         // noinspection ConstantConditions
         PLUGIN = Sponge.getPluginManager().getPlugin(VirtualChestPlugin.PLUGIN_ID).get().getInstance().get();
     }
@@ -76,7 +66,6 @@ public final class VirtualChestTimings
     private static final Timing APPLY_PLACEHOLDERS = Timings.of(PLUGIN, "applyPlaceholders");
     private static final Timing DESERIALIZE_ITEM = Timings.of(PLUGIN, "deserializeItem");
 
-    private VirtualChestTimings()
-    {
+    private VirtualChestTimings() {
     }
 }

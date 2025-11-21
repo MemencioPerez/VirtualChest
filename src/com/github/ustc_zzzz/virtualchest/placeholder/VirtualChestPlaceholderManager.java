@@ -24,16 +24,14 @@ import java.util.regex.Pattern;
 /**
  * @author ustc_zzzz
  */
-public class VirtualChestPlaceholderManager
-{
+public class VirtualChestPlaceholderManager {
     private static final String ARG_BOUNDARY = "%";
     private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("[%]([^%\\s]+)[%]", Pattern.CASE_INSENSITIVE);
 
     private final String papiVersion;
     private final PlaceholderService papiService;
 
-    public VirtualChestPlaceholderManager(VirtualChestPlugin plugin)
-    {
+    public VirtualChestPlaceholderManager(VirtualChestPlugin plugin) {
         ProviderRegistration<PlaceholderService> registration;
         ServiceManager serviceManager = Sponge.getServiceManager();
         plugin.getLogger().info("Try to load the PlaceholderAPI service ... ");
@@ -42,56 +40,47 @@ public class VirtualChestPlaceholderManager
         this.papiService = registration.getProvider();
     }
 
-    public String getPlaceholderAPIVersion()
-    {
+    public String getPlaceholderAPIVersion() {
         return this.papiVersion;
     }
 
-    public Object replacePlaceholder(Player player, String token)
-    {
+    public Object replacePlaceholder(Player player, String token) {
         TextTemplate template = TextTemplate.of(ARG_BOUNDARY, ARG_BOUNDARY, TextTemplate.arg(token));
         return Objects.requireNonNull(this.papiService.fillPlaceholders(template, player, player).get(token));
     }
 
-    public String parseJavaScriptLiteral(String text, String functionIdentifier)
-    {
+    public String parseJavaScriptLiteral(String text, String functionIdentifier) {
         StringBuilder builder = new StringBuilder();
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
         int lastIndex = 0;
-        while (matcher.find())
-        {
+        while (matcher.find()) {
             String matched = new JsonPrimitive(text.substring(matcher.start() + 1, matcher.end() - 1)).toString();
             builder.append(text, lastIndex, matcher.start()).append(functionIdentifier);
             builder.append("(").append(matched).append(")");
             lastIndex = matcher.end();
         }
-        if (lastIndex < text.length())
-        {
+        if (lastIndex < text.length()) {
             builder.append(text.substring(lastIndex));
         }
         return builder.toString();
     }
 
-    public String parseText(Player player, String textToBeReplaced)
-    {
+    public String parseText(Player player, String textToBeReplaced) {
         TextSerializer s = TextSerializers.FORMATTING_CODE;
         TextTemplate template = this.toTemplate(textToBeReplaced);
         Map<String, Object> placeholders = this.papiService.fillPlaceholders(template, player, player);
         return template.apply(Maps.transformValues(placeholders, v -> s.serialize(Text.of(v)))).build().toPlain();
     }
 
-    private TextTemplate toTemplate(String text)
-    {
+    private TextTemplate toTemplate(String text) {
         int lastIndex;
         List<TextRepresentable> parts = new LinkedList<>();
         Matcher matcher = PLACEHOLDER_PATTERN.matcher(text);
-        for (lastIndex = 0; matcher.find(); lastIndex = matcher.end())
-        {
+        for (lastIndex = 0; matcher.find(); lastIndex = matcher.end()) {
             parts.add(Text.of(text.substring(lastIndex, matcher.start())));
             parts.add(TextTemplate.arg(text.substring(matcher.start() + 1, matcher.end() - 1)).build());
         }
-        if (lastIndex < text.length())
-        {
+        if (lastIndex < text.length()) {
             parts.add(Text.builder(text.substring(lastIndex)).build());
         }
         return TextTemplate.of(ARG_BOUNDARY, ARG_BOUNDARY, parts.toArray());

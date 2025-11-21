@@ -25,8 +25,7 @@ import java.util.concurrent.CompletableFuture;
 /**
  * @author ustc_zzzz
  */
-public class SpongeUnimplemented
-{
+public class SpongeUnimplemented {
     private static final MethodHandle GET_ITEM_STACK;
     private static final MethodHandle SET_ITEM_STACK;
     private static final MethodHandle UPDATE_HELD_ITEM;
@@ -48,204 +47,144 @@ public class SpongeUnimplemented
     private static final MethodHandle GET_INSTANCE;
     private static final MethodHandle ARE_NBT_EQUALS;
 
-    public static Class<?> getItemEnchantmentClass()
-    {
-        try
-        {
-            try
-            {
+    public static Class<?> getItemEnchantmentClass() {
+        try {
+            try {
                 return Class.forName("org.spongepowered.api.item.enchantment.Enchantment");
-            }
-            catch (ClassNotFoundException e)
-            {
+            } catch (ClassNotFoundException e) {
                 return Class.forName("org.spongepowered.api.data.meta.ItemEnchantment");
             }
-        }
-        catch (ReflectiveOperationException e)
-        {
+        } catch (ReflectiveOperationException e) {
             throw new UnsupportedOperationException("ItemEnchantment not found");
         }
     }
 
-    public static boolean isPermissionServiceProvidedBySponge(PermissionService permissionService)
-    {
+    public static boolean isPermissionServiceProvidedBySponge(PermissionService permissionService) {
         return permissionService.getClass().getName().startsWith("org.spongepowered");
     }
 
-    public static ItemStackSnapshot getItemHeldByMouse(Player player)
-    {
-        try
-        {
+    public static ItemStackSnapshot getItemHeldByMouse(Player player) {
+        try {
             return (ItemStackSnapshot) SNAPSHOT_OF.invoke(GET_ITEM_STACK.invoke(player.getInventory()));
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
-    public static void setItemHeldByMouse(Player player, ItemStackSnapshot stack)
-    {
-        try
-        {
+    public static void setItemHeldByMouse(Player player, ItemStackSnapshot stack) {
+        try {
             SET_ITEM_STACK.invoke(player.getInventory(), FROM_SNAPSHOT_TO_NATIVE.invoke(stack));
             UPDATE_HELD_ITEM.invoke(player);
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
-    public static Cause createCause(Object obj)
-    {
-        try
-        {
-            if (CAUSE_APPEND_SOURCE.type().parameterCount() > 2)
-            {
+    public static Cause createCause(Object obj) {
+        try {
+            if (CAUSE_APPEND_SOURCE.type().parameterCount() > 2) {
                 Object causeBuilder = CAUSE_APPEND_SOURCE.invoke(Cause.builder(), "Source", obj);
                 return (Cause) CAUSE_BUILD.invoke(causeBuilder);
-            }
-            else
-            {
+            } else {
                 Object causeBuilder = CAUSE_APPEND_SOURCE.invoke(Cause.builder(), obj);
                 return (Cause) CAUSE_BUILD.invoke(causeBuilder, getEventContext());
             }
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
-    public static void openInventory(Player player, Inventory inventory, Object causeObj)
-    {
-        try
-        {
-            if (PLAYER_OPEN_INVENTORY.type().parameterCount() > 2)
-            {
+    public static void openInventory(Player player, Inventory inventory, Object causeObj) {
+        try {
+            if (PLAYER_OPEN_INVENTORY.type().parameterCount() > 2) {
                 PLAYER_OPEN_INVENTORY.invoke(player, inventory, createCause(causeObj));
-            }
-            else
-            {
+            } else {
                 PLAYER_OPEN_INVENTORY.invoke(player, inventory);
             }
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
-    public static void closeInventory(Player player, Object causeObj)
-    {
-        try
-        {
-            if (PLAYER_CLOSE_INVENTORY.type().parameterCount() > 1)
-            {
+    public static void closeInventory(Player player, Object causeObj) {
+        try {
+            if (PLAYER_CLOSE_INVENTORY.type().parameterCount() > 1) {
                 PLAYER_CLOSE_INVENTORY.invoke(player, createCause(causeObj));
-            }
-            else
-            {
+            } else {
                 PLAYER_CLOSE_INVENTORY.invoke(player);
             }
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
-    public static CompletableFuture<Boolean> clearPermissions(Object plugin, SubjectData data, Set<Context> contexts)
-    {
-        try
-        {
+    public static CompletableFuture<Boolean> clearPermissions(Object plugin, SubjectData data, Set<Context> contexts) {
+        try {
             Object result = SUBJECT_DATA_CLEAR_PERMISSIONS.invoke(data, contexts);
-            if (result instanceof CompletableFuture)
-            {
+            if (result instanceof CompletableFuture) {
                 @SuppressWarnings("unchecked")
                 CompletableFuture<Boolean> future = (CompletableFuture) result;
                 return future;
-            }
-            else
-            {
+            } else {
                 CompletableFuture<Boolean> future = new CompletableFuture<>();
                 Task.builder().async().delayTicks(2).intervalTicks(2).execute(task ->
                 {
-                    if (data.getPermissions(contexts).isEmpty())
-                    {
+                    if (data.getPermissions(contexts).isEmpty()) {
                         task.cancel();
                         future.complete((Boolean) result);
                     }
                 }).submit(plugin);
                 return future;
             }
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
-    public static CompletableFuture<Boolean> setPermission(Object plugin, SubjectData data, Set<Context> contexts, String permission)
-    {
-        try
-        {
+    public static CompletableFuture<Boolean> setPermission(Object plugin, SubjectData data, Set<Context> contexts, String permission) {
+        try {
             Object result = SUBJECT_DATA_SET_PERMISSION.invoke(data, contexts, permission, Tristate.TRUE);
-            if (result instanceof CompletableFuture)
-            {
+            if (result instanceof CompletableFuture) {
                 @SuppressWarnings("unchecked")
                 CompletableFuture<Boolean> future = (CompletableFuture) result;
                 return future;
-            }
-            else
-            {
+            } else {
                 CompletableFuture<Boolean> future = new CompletableFuture<>();
                 Task.builder().async().delayTicks(2).intervalTicks(2).execute(task ->
                 {
-                    if (data.getPermissions(contexts).getOrDefault(permission, Boolean.FALSE))
-                    {
+                    if (data.getPermissions(contexts).getOrDefault(permission, Boolean.FALSE)) {
                         task.cancel();
                         future.complete((Boolean) result);
                     }
                 }).submit(plugin);
                 return future;
             }
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
-    public static boolean isNBTMatched(Optional<DataView> matcher, ItemStackSnapshot item)
-    {
-        try
-        {
+    public static boolean isNBTMatched(Optional<DataView> matcher, ItemStackSnapshot item) {
+        try {
             Object nbt2 = GET_TAG_COMPOUND.invoke(FROM_SNAPSHOT_TO_NATIVE.invoke(item));
             Object nbt1 = matcher.isPresent() ? TRANSLATE_DATA.invoke(GET_INSTANCE.invoke(), matcher.get()) : null;
             return (boolean) ARE_NBT_EQUALS.invoke(nbt1, nbt2, true);
-        }
-        catch (Throwable throwable)
-        {
+        } catch (Throwable throwable) {
             throw new UnsupportedOperationException(throwable);
         }
     }
 
     @SuppressWarnings("deprecation")
-    public static int getCount(ItemStackSnapshot stackSnapshot)
-    {
+    public static int getCount(ItemStackSnapshot stackSnapshot) {
         return stackSnapshot.getCount();
     }
 
     @SuppressWarnings("deprecation")
-    public static DataContainer newDataContainer(DataView.SafetyMode safetyMode)
-    {
+    public static DataContainer newDataContainer(DataView.SafetyMode safetyMode) {
         return new org.spongepowered.api.data.MemoryDataContainer(safetyMode);
     }
 
-    static
-    {
+    static {
         MethodHandles.Lookup lookup = MethodHandles.publicLookup();
 
         GET_ITEM_STACK = getMethod(
@@ -280,44 +219,32 @@ public class SpongeUnimplemented
                 lookup, "net.minecraft.nbt.NBTUtil", "func_181123_a");
     }
 
-    private static Object getEventContext() throws ReflectiveOperationException
-    {
+    private static Object getEventContext() throws ReflectiveOperationException {
         Class<?> eventContextClass = Class.forName("org.spongepowered.api.event.cause.EventContext");
         Field field = eventContextClass.getDeclaredField("EMPTY_CONTEXT");
         field.setAccessible(true);
         return field.get(null);
     }
 
-    private static MethodHandle getMethod(MethodHandles.Lookup lookup, String clazz, String... methods)
-    {
-        try
-        {
+    private static MethodHandle getMethod(MethodHandles.Lookup lookup, String clazz, String... methods) {
+        try {
             return getMethod(lookup, Class.forName(clazz), methods);
-        }
-        catch (ClassNotFoundException e)
-        {
+        } catch (ClassNotFoundException e) {
             throw new UnsupportedOperationException("Class " + clazz + " not found", e);
         }
     }
 
-    private static MethodHandle getMethod(MethodHandles.Lookup lookup, Class<?> clazz, String... methods)
-    {
-        for (String methodName : methods)
-        {
+    private static MethodHandle getMethod(MethodHandles.Lookup lookup, Class<?> clazz, String... methods) {
+        for (String methodName : methods) {
             int spaceIndex = methodName.indexOf(' ');
             String desc = spaceIndex < 0 ? "" : methodName.substring(spaceIndex + 1);
             String name = spaceIndex < 0 ? methodName : methodName.substring(0, spaceIndex);
-            for (Method m : clazz.getMethods())
-            {
-                try
-                {
-                    if (m.getName().equals(name) && (desc.isEmpty() || Type.getMethodDescriptor(m).equals(desc)))
-                    {
+            for (Method m : clazz.getMethods()) {
+                try {
+                    if (m.getName().equals(name) && (desc.isEmpty() || Type.getMethodDescriptor(m).equals(desc))) {
                         return lookup.unreflect(m);
                     }
-                }
-                catch (Exception ignored)
-                {
+                } catch (Exception ignored) {
                     // just continue
                 }
             }
@@ -325,7 +252,6 @@ public class SpongeUnimplemented
         throw new UnsupportedOperationException("Methods " + Arrays.asList(methods) + " not found");
     }
 
-    private SpongeUnimplemented()
-    {
+    private SpongeUnimplemented() {
     }
 }

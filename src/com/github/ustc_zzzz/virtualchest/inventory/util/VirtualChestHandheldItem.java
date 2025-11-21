@@ -9,8 +9,7 @@ import org.spongepowered.api.util.annotation.NonnullByDefault;
  * @author ustc_zzzz
  */
 @NonnullByDefault
-public class VirtualChestHandheldItem extends VirtualChestItemTemplateWithNBT
-{
+public class VirtualChestHandheldItem extends VirtualChestItemTemplateWithNBT {
     public static final VirtualChestHandheldItem DEFAULT = new VirtualChestHandheldItem();
 
     private static final DataQuery COUNT = DataQuery.of("Count");
@@ -21,16 +20,14 @@ public class VirtualChestHandheldItem extends VirtualChestItemTemplateWithNBT
     private final boolean searchInventory;
     private final int repetitionLimit;
 
-    private VirtualChestHandheldItem()
-    {
+    private VirtualChestHandheldItem() {
         super();
         this.count = 0;
         this.repetitionLimit = 0;
         this.searchInventory = false;
     }
 
-    public VirtualChestHandheldItem(DataView view)
-    {
+    public VirtualChestHandheldItem(DataView view) {
         super(view.copy());
         this.count = view.getInt(COUNT).orElse(1);
         this.repetitionLimit = view.getInt(REPETITION_UPPER_LIMIT).orElse(0);
@@ -38,23 +35,19 @@ public class VirtualChestHandheldItem extends VirtualChestItemTemplateWithNBT
     }
 
     @Override
-    public boolean matchItem(ItemStackSnapshot item)
-    {
+    public boolean matchItem(ItemStackSnapshot item) {
         return this.count <= 0 || super.matchItem(item);
     }
 
-    public int getCount()
-    {
+    public int getCount() {
         return this.count;
     }
 
-    public int getRepetition(int count)
-    {
+    public int getRepetition(int count) {
         return this.count <= 0 ? this.repetitionLimit : Math.min(this.repetitionLimit, count / this.count - 1);
     }
 
-    public boolean isSearchingInventory()
-    {
+    public boolean isSearchingInventory() {
         return this.searchInventory;
     }
 }

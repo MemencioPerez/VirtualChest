@@ -12,12 +12,10 @@ import java.util.UUID;
  */
 @CompositePK({"submit_uuid", "execution_order"})
 @Table(VirtualChestRecordManager.ACTION_EXECUTION_RECORD)
-public class VirtualChestActionExecutionRecord extends Model
-{
+public class VirtualChestActionExecutionRecord extends Model {
     private static final long serialVersionUID = 1L;
 
-    VirtualChestActionExecutionRecord(UUID uuid, int order, String executionPrefix, String executionSuffix)
-    {
+    VirtualChestActionExecutionRecord(UUID uuid, int order, String executionPrefix, String executionSuffix) {
         this.set("execution_time", new Date());
         this.set("execution_order", order).set("submit_uuid", uuid.toString());
         this.set("execution_prefix", executionPrefix).set("execution_suffix", executionSuffix);

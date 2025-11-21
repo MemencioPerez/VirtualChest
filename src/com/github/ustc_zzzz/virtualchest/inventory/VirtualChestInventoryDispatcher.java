@@ -33,8 +33,7 @@ import java.util.*;
  * @author ustc_zzzz
  */
 @NonnullByDefault
-public class VirtualChestInventoryDispatcher implements VirtualChestService
-{
+public class VirtualChestInventoryDispatcher implements VirtualChestService {
     private final Logger logger;
     private final VirtualChestPlugin plugin;
     private final VirtualChestTranslation translation;
@@ -43,8 +42,7 @@ public class VirtualChestInventoryDispatcher implements VirtualChestService
     private Map<String, VirtualChest> inventories = new LinkedHashMap<>();
     private Map<UUID, Tuple<String, WeakReference<Container>>> containers = new HashMap<>();
 
-    public VirtualChestInventoryDispatcher(VirtualChestPlugin plugin)
-    {
+    public VirtualChestInventoryDispatcher(VirtualChestPlugin plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.translation = plugin.getTranslation();
@@ -52,28 +50,23 @@ public class VirtualChestInventoryDispatcher implements VirtualChestService
     }
 
     @Override
-    public Set<String> ids()
-    {
+    public Set<String> ids() {
         return Collections.unmodifiableSet(inventories.keySet());
     }
 
     @Override
-    public Optional<String> lookup(Player player)
-    {
+    public Optional<String> lookup(Player player) {
         UUID uuid = player.getUniqueId();
         Tuple<String, WeakReference<Container>> tuple = containers.get(uuid);
         return Optional.ofNullable(tuple).filter(t -> this.isInventoryOpening(player, t)).map(Tuple::getFirst);
     }
 
     @Override
-    public boolean open(String id, Player player)
-    {
+    public boolean open(String id, Player player) {
         UUID uuid = player.getUniqueId();
-        if (inventories.containsKey(id))
-        {
+        if (inventories.containsKey(id)) {
             Tuple<String, WeakReference<Container>> tuple = containers.get(uuid);
-            if (!Objects.nonNull(tuple) || !this.isInventoryOpening(player, id, tuple))
-            {
+            if (!Objects.nonNull(tuple) || !this.isInventoryOpening(player, id, tuple)) {
                 SpongeUnimplemented.openInventory(player, inventories.get(id).create(id, player), plugin);
                 Container container = player.getOpenInventory().orElseThrow(IllegalStateException::new);
                 containers.put(uuid, Tuple.of(id, new WeakReference<>(container)));
@@ -84,14 +77,11 @@ public class VirtualChestInventoryDispatcher implements VirtualChestService
     }
 
     @Override
-    public boolean close(String id, Player player)
-    {
+    public boolean close(String id, Player player) {
         UUID uuid = player.getUniqueId();
-        if (inventories.containsKey(id))
-        {
+        if (inventories.containsKey(id)) {
             Tuple<String, WeakReference<Container>> tuple = containers.remove(uuid);
-            if (!Objects.isNull(tuple) && this.isInventoryOpening(player, id, tuple))
-            {
+            if (!Objects.isNull(tuple) && this.isInventoryOpening(player, id, tuple)) {
                 SpongeUnimplemented.closeInventory(player, plugin);
                 return true;
             }
@@ -99,15 +89,12 @@ public class VirtualChestInventoryDispatcher implements VirtualChestService
         return false;
     }
 
-    public boolean update(String id, Player player)
-    {
+    public boolean update(String id, Player player) {
         UUID uuid = player.getUniqueId();
 
-        if (inventories.containsKey(id))
-        {
+        if (inventories.containsKey(id)) {
             Tuple<String, WeakReference<Container>> tuple = containers.get(uuid);
-            if (!Objects.isNull(tuple) && this.isInventoryOpening(player, id, tuple))
-            {
+            if (!Objects.isNull(tuple) && this.isInventoryOpening(player, id, tuple)) {
                 // noinspection ConstantConditions
                 inventories.get(id).getUpdaterFor(id, player).accept(tuple.getSecond().get().first());
                 return true;
@@ -116,66 +103,53 @@ public class VirtualChestInventoryDispatcher implements VirtualChestService
         return false;
     }
 
-    public boolean isInventoryMatchingPrimaryAction(String id, ItemStackSnapshot item)
-    {
+    public boolean isInventoryMatchingPrimaryAction(String id, ItemStackSnapshot item) {
         VirtualChest chest = inventories.get(id);
         return chest instanceof VirtualChestInventory && ((VirtualChestInventory) chest).matchPrimaryAction(item);
     }
 
-    public boolean isInventoryMatchingSecondaryAction(String id, ItemStackSnapshot item)
-    {
+    public boolean isInventoryMatchingSecondaryAction(String id, ItemStackSnapshot item) {
         VirtualChest chest = inventories.get(id);
         return chest instanceof VirtualChestInventory && ((VirtualChestInventory) chest).matchSecondaryAction(item);
     }
 
-    public void loadConfig(CommentedConfigurationNode node) throws IOException
-    {
-        try
-        {
+    public void loadConfig(CommentedConfigurationNode node) throws IOException {
+        try {
             Path configDir = plugin.getConfigDir();
             Map<String, VirtualChestInventory> newOnes = new LinkedHashMap<>();
             this.menuDirs = ImmutableList.copyOf(node.getList(TypeToken.of(String.class), this::releaseExample));
             this.menuDirs.stream().map(configDir::resolve).forEach(p -> newOnes.putAll(this.scanDir(p.toFile())));
             this.updateInventories(newOnes);
             this.fireLoadEvent();
-        }
-        catch (ObjectMappingException e)
-        {
+        } catch (ObjectMappingException e) {
             throw new IOException(e);
         }
     }
 
-    public void saveConfig(CommentedConfigurationNode node) throws IOException
-    {
+    public void saveConfig(CommentedConfigurationNode node) throws IOException {
         node.setValue(this.menuDirs)
                 .setComment(node.getComment().orElse(this.translation
                         .take("virtualchest.config.scanDir.comment").toPlain()));
     }
 
-    public List<String> releaseExample()
-    {
+    public List<String> releaseExample() {
         String defaultMenuDir = "menu/";
         File menuDir = this.plugin.getConfigDir().resolve(defaultMenuDir).toFile();
-        if (menuDir.isDirectory() || menuDir.mkdirs())
-        {
-            try
-            {
+        if (menuDir.isDirectory() || menuDir.mkdirs()) {
+            try {
                 AssetManager assetManager = Sponge.getAssetManager();
                 Optional<Asset> example = assetManager.getAsset(this.plugin, "examples/example.conf");
                 Optional<Asset> example2 = assetManager.getAsset(this.plugin, "examples/example2.conf");
                 example.orElseThrow(IOException::new).copyToDirectory(menuDir.toPath());
                 example2.orElseThrow(IOException::new).copyToDirectory(menuDir.toPath());
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 this.logger.warn("Cannot extract default chest GUI configurations", e);
             }
         }
         return Collections.singletonList(defaultMenuDir);
     }
 
-    public boolean hasPermission(Player player, String inventoryName)
-    {
+    public boolean hasPermission(Player player, String inventoryName) {
         boolean hasSelfPermission = player.hasPermission("virtualchest.open.self." + inventoryName);
         boolean hasOthersPermission = player.hasPermission("virtualchest.open.others." + inventoryName);
         boolean hasSelfUpdatePermission = player.hasPermission("virtualchest.update.self" + inventoryName);
@@ -183,55 +157,43 @@ public class VirtualChestInventoryDispatcher implements VirtualChestService
         return hasSelfPermission || hasOthersPermission || hasSelfUpdatePermission || hasOthersUpdatePermission;
     }
 
-    public boolean isInventoryOpening(Player player, Container container)
-    {
+    public boolean isInventoryOpening(Player player, Container container) {
         Optional<Container> openInventory = player.getOpenInventory();
         return openInventory.isPresent() && container.equals(openInventory.get());
     }
 
-    private boolean isInventoryOpening(Player player, Tuple<String, WeakReference<Container>> tuple)
-    {
+    private boolean isInventoryOpening(Player player, Tuple<String, WeakReference<Container>> tuple) {
         Container container = tuple.getSecond().get();
         return Objects.nonNull(container) && this.isInventoryOpening(player, container);
     }
 
-    private boolean isInventoryOpening(Player player, String id, Tuple<String, WeakReference<Container>> tuple)
-    {
+    private boolean isInventoryOpening(Player player, String id, Tuple<String, WeakReference<Container>> tuple) {
         String first = tuple.getFirst();
         return id.equals(first) && this.isInventoryOpening(player, tuple);
     }
 
-    private void fireLoadEvent()
-    {
+    private void fireLoadEvent() {
         Sponge.getEventManager().post(new LoadEvent());
     }
 
-    private void updateInventories(Map<String, VirtualChestInventory> newInventories)
-    {
+    private void updateInventories(Map<String, VirtualChestInventory> newInventories) {
         inventories.clear();
         inventories.putAll(Maps.transformValues(newInventories, Objects::requireNonNull));
     }
 
-    private Map<String, VirtualChestInventory> scanDir(File file)
-    {
+    private Map<String, VirtualChestInventory> scanDir(File file) {
         Map<String, VirtualChestInventory> newInventories = new LinkedHashMap<>();
-        if (file.isDirectory() || file.mkdirs())
-        {
-            for (File f : Optional.ofNullable(file.listFiles()).orElse(new File[0]))
-            {
+        if (file.isDirectory() || file.mkdirs()) {
+            for (File f : Optional.ofNullable(file.listFiles()).orElse(new File[0])) {
                 String fileName = f.getName();
-                if (fileName.endsWith(".conf"))
-                {
+                if (fileName.endsWith(".conf")) {
                     String chestName = fileName.substring(0, fileName.lastIndexOf(".conf"));
-                    try
-                    {
+                    try {
                         HoconConfigurationLoader loader = HoconConfigurationLoader.builder().setFile(f).build();
                         CommentedConfigurationNode menuRoot = loader.load().getNode(VirtualChestPlugin.PLUGIN_ID);
                         VirtualChestInventory inventory = menuRoot.getValue(TypeToken.of(VirtualChestInventory.class));
                         newInventories.put(chestName, Objects.requireNonNull(inventory));
-                    }
-                    catch (Exception e)
-                    {
+                    } catch (Exception e) {
                         this.logger.warn("Find error when reading a file (" + f.getAbsolutePath() +
                                 "). Don't worry, we will skip this one and continue to read others", e);
                     }
@@ -241,23 +203,19 @@ public class VirtualChestInventoryDispatcher implements VirtualChestService
         return newInventories;
     }
 
-    private class LoadEvent extends AbstractEvent implements VirtualChest.LoadEvent
-    {
+    private class LoadEvent extends AbstractEvent implements VirtualChest.LoadEvent {
         @Override
-        public void unregister(String identifier)
-        {
+        public void unregister(String identifier) {
             inventories.remove(identifier);
         }
 
         @Override
-        public void register(String identifier, VirtualChest chest)
-        {
+        public void register(String identifier, VirtualChest chest) {
             inventories.put(identifier, chest);
         }
 
         @Override
-        public Cause getCause()
-        {
+        public Cause getCause() {
             return SpongeUnimplemented.createCause(plugin);
         }
     }

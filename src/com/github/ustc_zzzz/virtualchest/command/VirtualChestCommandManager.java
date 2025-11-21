@@ -34,8 +34,7 @@ import java.util.stream.Collectors;
  * @author ustc_zzzz
  */
 @NonnullByDefault
-public class VirtualChestCommandManager implements Supplier<CommandCallable>
-{
+public class VirtualChestCommandManager implements Supplier<CommandCallable> {
     private static final String VERSION = VirtualChestPlugin.VERSION;
     private static final String SUBTITLE = VirtualChestPlugin.DESCRIPTION;
     private static final String GITHUB_URL = VirtualChestPlugin.GITHUB_URL;
@@ -52,8 +51,7 @@ public class VirtualChestCommandManager implements Supplier<CommandCallable>
     private final CommandCallable openCommand;
     private final CommandCallable versionCommand;
 
-    public VirtualChestCommandManager(VirtualChestPlugin plugin)
-    {
+    public VirtualChestCommandManager(VirtualChestPlugin plugin) {
         this.plugin = plugin;
         this.translation = plugin.getTranslation();
 
@@ -88,20 +86,17 @@ public class VirtualChestCommandManager implements Supplier<CommandCallable>
                 .executor(this::processVersionCommand).build();
     }
 
-    public void init()
-    {
+    public void init() {
         CommandManager commandManager = Sponge.getCommandManager();
         commandManager.register(this.plugin, this.get(), "virtualchest", "vchest", "vc");
     }
 
-    private CommandResult processVersionCommand(CommandSource source, CommandContext args) throws CommandException
-    {
+    private CommandResult processVersionCommand(CommandSource source, CommandContext args) throws CommandException {
         source.sendMessage(Text.of("================================================================"));
         source.sendMessage(this.translation.take("virtualchest.version.description.title", VERSION));
         source.sendMessage(this.translation.take("virtualchest.version.description.subtitle", SUBTITLE));
         source.sendMessage(Text.of("================================================================"));
-        try
-        {
+        try {
             // RFC 3339
             Date releaseDate = RFC3339.parse("@release_date@");
             String gitCommitHash = "@git_hash@";
@@ -124,34 +119,25 @@ public class VirtualChestCommandManager implements Supplier<CommandCallable>
                     .take("virtualchest.version.description.line4", ""), urlGitHub));
 
             source.sendMessage(Text.of("================================================================"));
-        }
-        catch (MalformedURLException | ParseException e)
-        {
+        } catch (MalformedURLException | ParseException e) {
             throw new RuntimeException(e);
         }
         return CommandResult.success();
     }
 
-    private CommandResult processOpenCommand(CommandSource source, CommandContext args) throws CommandException
-    {
+    private CommandResult processOpenCommand(CommandSource source, CommandContext args) throws CommandException {
         // noinspection ConstantConditions
         String inventoryName = args.<String>getOne("inventory").get();
         Collection<Player> players = args.getAll("player");
         Scheduler spongeScheduler = Sponge.getScheduler();
-        for (Player player : players)
-        {
-            if (player.equals(source))
-            {
-                if (!source.hasPermission("virtualchest.open.self." + inventoryName))
-                {
+        for (Player player : players) {
+            if (player.equals(source)) {
+                if (!source.hasPermission("virtualchest.open.self." + inventoryName)) {
                     String errorKey = "virtualchest.open.self.noPermission";
                     throw new CommandException(this.translation.take(errorKey, inventoryName));
                 }
-            }
-            else if (source instanceof Player)
-            {
-                if (!source.hasPermission("virtualchest.open.others." + inventoryName))
-                {
+            } else if (source instanceof Player) {
+                if (!source.hasPermission("virtualchest.open.others." + inventoryName)) {
                     String errorKey = "virtualchest.open.others.noPermission";
                     throw new CommandException(this.translation.take(errorKey, inventoryName, player.getName()));
                 }
@@ -162,25 +148,18 @@ public class VirtualChestCommandManager implements Supplier<CommandCallable>
         return CommandResult.success();
     }
 
-    private CommandResult processUpdateCommand(CommandSource source, CommandContext args) throws CommandException
-    {
+    private CommandResult processUpdateCommand(CommandSource source, CommandContext args) throws CommandException {
         // noinspection ConstantConditions
         String inventoryName = args.<String>getOne("inventory").get();
         Collection<Player> players = args.getAll("player");
-        for (Player player : players)
-        {
-            if (player.equals(source))
-            {
-                if (!source.hasPermission("virtualchest.update.self." + inventoryName))
-                {
+        for (Player player : players) {
+            if (player.equals(source)) {
+                if (!source.hasPermission("virtualchest.update.self." + inventoryName)) {
                     String errorKey = "virtualchest.update.self.noPermission";
                     throw new CommandException(this.translation.take(errorKey, inventoryName));
                 }
-            }
-            else if (source instanceof Player)
-            {
-                if (!source.hasPermission("virtualchest.update.others." + inventoryName))
-                {
+            } else if (source instanceof Player) {
+                if (!source.hasPermission("virtualchest.update.others." + inventoryName)) {
                     String errorKey = "virtualchest.update.others.noPermission";
                     throw new CommandException(this.translation.take(errorKey, inventoryName, player.getName()));
                 }
@@ -192,17 +171,14 @@ public class VirtualChestCommandManager implements Supplier<CommandCallable>
         return CommandResult.success();
     }
 
-    private CommandResult processListCommand(CommandSource source, CommandContext args) throws CommandException
-    {
+    private CommandResult processListCommand(CommandSource source, CommandContext args) throws CommandException {
         VirtualChestInventoryDispatcher dispatcher = this.plugin.getDispatcher();
-        if (source instanceof Player && !source.hasPermission("virtualchest.list"))
-        {
+        if (source instanceof Player && !source.hasPermission("virtualchest.list")) {
             Text error = translation.take("virtualchest.list.noPermission", source.getName());
             throw new CommandException(error);
         }
         Set<String> inventories = dispatcher.ids();
-        if (source instanceof Player)
-        {
+        if (source instanceof Player) {
             Predicate<String> inventoryNamePredict = name -> dispatcher.hasPermission((Player) source, name);
             inventories = inventories.stream().filter(inventoryNamePredict).collect(Collectors.toSet());
         }
@@ -211,16 +187,11 @@ public class VirtualChestCommandManager implements Supplier<CommandCallable>
         return CommandResult.success();
     }
 
-    private CommandResult processReloadCommand(CommandSource source, CommandContext args) throws CommandException
-    {
-        if (!source.hasPermission("virtualchest.reload"))
-        {
+    private CommandResult processReloadCommand(CommandSource source, CommandContext args) throws CommandException {
+        if (!source.hasPermission("virtualchest.reload")) {
             return CommandResult.empty();
-        }
-        else
-        {
-            if (args.getOne("extract-examples").isPresent())
-            {
+        } else {
+            if (args.getOne("extract-examples").isPresent()) {
                 this.plugin.getDispatcher().releaseExample();
             }
             this.plugin.onReload(() -> SpongeUnimplemented.createCause(source));
@@ -229,8 +200,7 @@ public class VirtualChestCommandManager implements Supplier<CommandCallable>
     }
 
     @Override
-    public CommandCallable get()
-    {
+    public CommandCallable get() {
         return CommandSpec.builder()
                 .child(this.reloadCommand, "reload", "r")
                 .child(this.listCommand, "list", "l")

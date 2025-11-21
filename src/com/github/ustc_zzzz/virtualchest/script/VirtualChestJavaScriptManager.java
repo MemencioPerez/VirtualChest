@@ -19,8 +19,7 @@ import java.util.function.Function;
 /**
  * @author ustc_zzzz
  */
-public class VirtualChestJavaScriptManager
-{
+public class VirtualChestJavaScriptManager {
     private final Logger logger;
     private final VirtualChestPlugin plugin;
     private final ScriptEngine scriptEngine;
@@ -31,8 +30,7 @@ public class VirtualChestJavaScriptManager
     private final SimpleScriptContext tempContext = new SimpleScriptContext();
     private final Map<Player, Long> tickWhileOpeningInventory = new WeakHashMap<>();
 
-    public VirtualChestJavaScriptManager(VirtualChestPlugin plugin)
-    {
+    public VirtualChestJavaScriptManager(VirtualChestPlugin plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
         this.tempContext.setAttribute("server", Sponge.getServer(), ScriptContext.ENGINE_SCOPE);
@@ -42,25 +40,19 @@ public class VirtualChestJavaScriptManager
         this.nonsenseFalse = new CompiledScriptNonsense(this.scriptEngine, Boolean.FALSE);
     }
 
-    public void onOpeningInventory(Player player)
-    {
+    public void onOpeningInventory(Player player) {
         this.tickWhileOpeningInventory.put(player, player.getWorld().getProperties().getTotalTime());
     }
 
-    public Tuple<String, CompiledScript> prepare(String scriptLiteral)
-    {
+    public Tuple<String, CompiledScript> prepare(String scriptLiteral) {
         String script = this.plugin.getPlaceholderManager().parseJavaScriptLiteral(scriptLiteral.trim(), "papi");
-        if (script.isEmpty())
-        {
+        if (script.isEmpty()) {
             return Tuple.of(scriptLiteral, this.nonsenseTrue);
         }
-        try
-        {
+        try {
             this.logger.debug("Compile script \"{}\" for preparation", script);
             return Tuple.of(scriptLiteral, ((Compilable) this.scriptEngine).compile(script));
-        }
-        catch (ScriptException e)
-        {
+        } catch (ScriptException e) {
             this.logger.error("Error found when compiling script \"" + script +
                     "\" (the original script is \"" + scriptLiteral.trim() + "\")", e);
             this.logger.debug("Result: {}", Boolean.FALSE);
@@ -68,38 +60,29 @@ public class VirtualChestJavaScriptManager
         }
     }
 
-    public boolean execute(Player player, Tuple<String, CompiledScript> tuple)
-    {
+    public boolean execute(Player player, Tuple<String, CompiledScript> tuple) {
         String scriptLiteral = tuple.getFirst();
         ScriptContext context = this.getContext(player);
-        try (Timing ignored = VirtualChestTimings.executeRequirementScript().startTiming())
-        {
+        try (Timing ignored = VirtualChestTimings.executeRequirementScript().startTiming()) {
             return Boolean.valueOf(String.valueOf(tuple.getSecond().eval(context)));
-        }
-        catch (ScriptException e)
-        {
+        } catch (ScriptException e) {
             this.logger.error("Error found when executing script for player " + player.getName(), e);
             this.logger.debug("Literal: {}", scriptLiteral);
             this.logger.debug("Result: {}", Boolean.FALSE);
             return false;
-        }
-        finally
-        {
+        } finally {
             this.removeContextAttributes(context);
         }
     }
 
-    private void removeContextAttributes(ScriptContext context)
-    {
+    private void removeContextAttributes(ScriptContext context) {
         context.removeAttribute("tick", ScriptContext.ENGINE_SCOPE);
         context.removeAttribute("papi", ScriptContext.ENGINE_SCOPE);
         context.removeAttribute("player", ScriptContext.ENGINE_SCOPE);
     }
 
-    private ScriptContext getContext(Player player)
-    {
-        try (Timing ignored = VirtualChestTimings.prepareRequirementBindings().startTiming())
-        {
+    private ScriptContext getContext(Player player) {
+        try (Timing ignored = VirtualChestTimings.prepareRequirementBindings().startTiming()) {
             SimpleScriptContext context = this.tempContext;
             VirtualChestPlaceholderManager placeholderManager = this.plugin.getPlaceholderManager();
             Function<String, Object> papi = s -> Text.of(placeholderManager.replacePlaceholder(player, s)).toPlain();
@@ -112,35 +95,29 @@ public class VirtualChestJavaScriptManager
         }
     }
 
-    private Long getTickFromOpeningInventory(Player player)
-    {
-        if (this.tickWhileOpeningInventory.containsKey(player))
-        {
+    private Long getTickFromOpeningInventory(Player player) {
+        if (this.tickWhileOpeningInventory.containsKey(player)) {
             return player.getWorld().getProperties().getTotalTime() - this.tickWhileOpeningInventory.get(player);
         }
         return 0L;
     }
 
-    private static class CompiledScriptNonsense extends CompiledScript
-    {
+    private static class CompiledScriptNonsense extends CompiledScript {
         private final Object result;
         private final ScriptEngine engine;
 
-        private CompiledScriptNonsense(ScriptEngine engine, Object result)
-        {
+        private CompiledScriptNonsense(ScriptEngine engine, Object result) {
             this.result = result;
             this.engine = engine;
         }
 
         @Override
-        public Object eval(ScriptContext context) throws ScriptException
-        {
+        public Object eval(ScriptContext context) throws ScriptException {
             return this.result;
         }
 
         @Override
-        public ScriptEngine getEngine()
-        {
+        public ScriptEngine getEngine() {
             return this.engine;
         }
     }

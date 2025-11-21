@@ -20,8 +20,7 @@ import java.util.UUID;
 /**
  * @author ustc_zzzz
  */
-public class VirtualChestEconomyManager
-{
+public class VirtualChestEconomyManager {
     private final Cause cause;
     private final Logger logger;
     private final Map<String, Currency> currencies = new HashMap<>();
@@ -29,90 +28,69 @@ public class VirtualChestEconomyManager
     private Currency defaultCurrency;
     private EconomyService economyService;
 
-    public VirtualChestEconomyManager(VirtualChestPlugin plugin)
-    {
+    public VirtualChestEconomyManager(VirtualChestPlugin plugin) {
         this.logger = plugin.getLogger();
         this.cause = SpongeUnimplemented.createCause(plugin);
     }
 
-    public void init()
-    {
+    public void init() {
         Optional<EconomyService> serviceOptional = Sponge.getServiceManager().provide(EconomyService.class);
-        if (serviceOptional.isPresent())
-        {
+        if (serviceOptional.isPresent()) {
             economyService = serviceOptional.get();
             defaultCurrency = economyService.getDefaultCurrency();
             economyService.getCurrencies().forEach(this::addCurrency);
             Optional.ofNullable(defaultCurrency).ifPresent(this::addCurrency);
-        }
-        else
-        {
+        } else {
             this.logger.warn("VirtualChest could not find the economy service. ");
             this.logger.warn("Features related to the economy may not work normally.");
         }
     }
 
-    public boolean withdrawBalance(String currencyName, Player player, BigDecimal cost)
-    {
-        try
-        {
+    public boolean withdrawBalance(String currencyName, Player player, BigDecimal cost) {
+        try {
             return withdrawBalance(getCurrencyByName(currencyName), getAccountByPlayer(player), cost);
-        }
-        catch (IllegalArgumentException e)
-        {
+        } catch (IllegalArgumentException e) {
             this.logger.warn("Find error when checking the balance of player '" + player.getName() + "'.", e);
             return false;
         }
     }
 
-    public boolean depositBalance(String currencyName, Player player, BigDecimal cost)
-    {
-        try
-        {
+    public boolean depositBalance(String currencyName, Player player, BigDecimal cost) {
+        try {
             return depositBalance(getCurrencyByName(currencyName), getAccountByPlayer(player), cost);
-        }
-        catch (IllegalArgumentException e)
-        {
+        } catch (IllegalArgumentException e) {
             this.logger.warn("Find error when checking the balance of player '" + player.getName() + "'.", e);
             return false;
         }
     }
 
-    private void addCurrency(Currency currency)
-    {
+    private void addCurrency(Currency currency) {
         currencies.put(currency.getId().toLowerCase(), currency);
     }
 
-    private Currency getCurrencyByName(String name)
-    {
-        if (name.isEmpty())
-        {
+    private Currency getCurrencyByName(String name) {
+        if (name.isEmpty()) {
             String message = "Default currency is not supported by the economy plugin";
             return Optional.ofNullable(defaultCurrency).orElseThrow(() -> new IllegalArgumentException(message));
-        }
-        else
-        {
+        } else {
             String message = "The specified currency name (" + name + ") is not supported by the economy plugin";
             return Optional.ofNullable(currencies.get(name)).orElseThrow(() -> new IllegalArgumentException(message));
         }
     }
 
-    private UniqueAccount getAccountByPlayer(Player player)
-    {
+    private UniqueAccount getAccountByPlayer(Player player) {
         UUID uniqueId = player.getUniqueId();
         String message = "Unsupported account for uuid: " + uniqueId.toString();
         return economyService.getOrCreateAccount(uniqueId).orElseThrow(() -> new IllegalArgumentException(message));
     }
 
-    private boolean withdrawBalance(Currency currency, UniqueAccount account, BigDecimal cost)
-    {
+    private boolean withdrawBalance(Currency currency, UniqueAccount account, BigDecimal cost) {
         BigDecimal balance = account.getBalance(currency);
         ResultType result = account.withdraw(currency, cost, cause).getResult();
         return ResultType.SUCCESS.equals(result);
     }
 
-    private boolean depositBalance(Currency currency, UniqueAccount account, BigDecimal cost)
-    {
+    private boolean depositBalance(Currency currency, UniqueAccount account, BigDecimal cost) {
         BigDecimal balance = account.getBalance(currency);
         ResultType result = account.deposit(currency, cost, cause).getResult();
         return ResultType.SUCCESS.equals(result);

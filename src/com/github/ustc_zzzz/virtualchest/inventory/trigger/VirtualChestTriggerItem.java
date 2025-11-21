@@ -8,35 +8,30 @@ import org.spongepowered.api.item.inventory.ItemStackSnapshot;
 /**
  * @author ustc_zzzz
  */
-public class VirtualChestTriggerItem extends VirtualChestItemTemplateWithNBT
-{
+public class VirtualChestTriggerItem extends VirtualChestItemTemplateWithNBT {
     private static final DataQuery ENABLE_PRIMARY_ACTION = DataQuery.of("EnablePrimaryAction");
     private static final DataQuery ENABLE_SECONDARY_ACTION = DataQuery.of("EnableSecondaryAction");
 
     private final boolean enablePrimary;
     private final boolean enableSecondary;
 
-    public VirtualChestTriggerItem()
-    {
+    public VirtualChestTriggerItem() {
         super();
         this.enablePrimary = false;
         this.enableSecondary = false;
     }
 
-    public VirtualChestTriggerItem(DataView triggerItemConfiguration)
-    {
+    public VirtualChestTriggerItem(DataView triggerItemConfiguration) {
         super(triggerItemConfiguration.copy());
         this.enablePrimary = triggerItemConfiguration.getBoolean(ENABLE_PRIMARY_ACTION).orElse(true);
         this.enableSecondary = triggerItemConfiguration.getBoolean(ENABLE_SECONDARY_ACTION).orElse(true);
     }
 
-    public boolean matchItemForOpeningWithPrimaryAction(ItemStackSnapshot item)
-    {
+    public boolean matchItemForOpeningWithPrimaryAction(ItemStackSnapshot item) {
         return this.enablePrimary && this.matchItem(item);
     }
 
-    public boolean matchItemForOpeningWithSecondaryAction(ItemStackSnapshot item)
-    {
+    public boolean matchItemForOpeningWithSecondaryAction(ItemStackSnapshot item) {
         return this.enableSecondary && this.matchItem(item);
     }
 }

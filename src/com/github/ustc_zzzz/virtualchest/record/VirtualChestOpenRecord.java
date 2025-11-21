@@ -13,12 +13,10 @@ import java.util.UUID;
  */
 @IdName("submit_uuid")
 @Table(VirtualChestRecordManager.OPEN_RECORD)
-public class VirtualChestOpenRecord extends Model
-{
+public class VirtualChestOpenRecord extends Model {
     private static final long serialVersionUID = 1L;
 
-    VirtualChestOpenRecord(UUID uuid, String menuName, Player p)
-    {
+    VirtualChestOpenRecord(UUID uuid, String menuName, Player p) {
         this.set("submit_time", new Date());
         this.set("submit_uuid", uuid.toString());
         this.set("menu_name", menuName).set("player_name", p.getName()).set("player_uuid", p.getUniqueId().toString());

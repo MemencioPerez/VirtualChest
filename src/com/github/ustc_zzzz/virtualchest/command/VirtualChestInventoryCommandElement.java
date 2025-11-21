@@ -22,13 +22,11 @@ import java.util.function.Predicate;
  * @author ustc_zzzz
  */
 @NonnullByDefault
-public class VirtualChestInventoryCommandElement extends CommandElement
-{
+public class VirtualChestInventoryCommandElement extends CommandElement {
     private final VirtualChestTranslation translation;
     private final VirtualChestInventoryDispatcher dispatcher;
 
-    public VirtualChestInventoryCommandElement(VirtualChestPlugin plugin, Text key)
-    {
+    public VirtualChestInventoryCommandElement(VirtualChestPlugin plugin, Text key) {
         super(key);
         this.dispatcher = plugin.getDispatcher();
         this.translation = plugin.getTranslation();
@@ -36,26 +34,22 @@ public class VirtualChestInventoryCommandElement extends CommandElement
 
     @Nullable
     @Override
-    protected String parseValue(CommandSource src, CommandArgs args) throws ArgumentParseException
-    {
+    protected String parseValue(CommandSource src, CommandArgs args) throws ArgumentParseException {
         String name = args.next();
-        if (this.dispatcher.ids().contains(name) && this.hasPermission(src, name))
-        {
+        if (this.dispatcher.ids().contains(name) && this.hasPermission(src, name)) {
             return name;
         }
         throw args.createError(this.translation.take("virtualchest.open.notExists", name));
     }
 
     @Override
-    public List<String> complete(CommandSource src, CommandArgs args, CommandContext context)
-    {
+    public List<String> complete(CommandSource src, CommandArgs args, CommandContext context) {
         String prefix = args.nextIfPresent().orElse("");
         Predicate<String> predicate = new StartsWithPredicate(prefix).and(n -> this.hasPermission(src, n));
         return ImmutableList.copyOf(this.dispatcher.ids().stream().filter(predicate).iterator());
     }
 
-    private boolean hasPermission(CommandSource source, String inventoryName)
-    {
+    private boolean hasPermission(CommandSource source, String inventoryName) {
         return !(source instanceof Player) || this.dispatcher.hasPermission((Player) source, inventoryName);
     }
 }

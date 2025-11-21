@@ -12,27 +12,23 @@ import java.util.Optional;
  * @author ustc_zzzz
  */
 @NonnullByDefault
-public class VirtualChestItemTemplateWithNBT extends VirtualChestItemTemplate
-{
+public class VirtualChestItemTemplateWithNBT extends VirtualChestItemTemplate {
     private static final DataQuery UNSAFE_NBT = DataQuery.of("UnsafeData");
 
     private final Optional<DataView> nbt;
 
-    public VirtualChestItemTemplateWithNBT()
-    {
+    public VirtualChestItemTemplateWithNBT() {
         super(SpongeUnimplemented.newDataContainer(DataView.SafetyMode.ALL_DATA_CLONED));
         this.nbt = Optional.empty();
     }
 
-    public VirtualChestItemTemplateWithNBT(DataView view)
-    {
+    public VirtualChestItemTemplateWithNBT(DataView view) {
         super(view.copy());
         this.nbt = this.toContainer().getView(UNSAFE_NBT);
     }
 
     @Override
-    public boolean matchItem(ItemStackSnapshot item)
-    {
+    public boolean matchItem(ItemStackSnapshot item) {
         return super.matchItem(item) && SpongeUnimplemented.isNBTMatched(this.nbt, item);
     }
 }

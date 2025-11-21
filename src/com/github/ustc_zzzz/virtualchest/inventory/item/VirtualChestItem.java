@@ -23,8 +23,7 @@ import java.util.Optional;
 /**
  * @author ustc_zzzz
  */
-public class VirtualChestItem
-{
+public class VirtualChestItem {
     public static final DataQuery ITEM = DataQuery.of("Item");
     public static final DataQuery REQUIREMENTS = DataQuery.of("Requirements");
     public static final DataQuery IGNORED_PERMISSIONS = DataQuery.of("IgnoredPermissions");
@@ -46,8 +45,7 @@ public class VirtualChestItem
     private final VirtualChestActionDispatcher primaryShiftAction;
     private final VirtualChestActionDispatcher secondaryShiftAction;
 
-    public static DataContainer serialize(VirtualChestPlugin plugin, VirtualChestItem item) throws InvalidDataException
-    {
+    public static DataContainer serialize(VirtualChestPlugin plugin, VirtualChestItem item) throws InvalidDataException {
         DataContainer container = SpongeUnimplemented.newDataContainer(DataView.SafetyMode.ALL_DATA_CLONED);
 
         container.set(ITEM, item.serializedStack);
@@ -62,8 +60,7 @@ public class VirtualChestItem
         return container;
     }
 
-    public static VirtualChestItem deserialize(VirtualChestPlugin plugin, DataView data) throws InvalidDataException
-    {
+    public static VirtualChestItem deserialize(VirtualChestPlugin plugin, DataView data) throws InvalidDataException {
         DataView serializedStack = data.getView(ITEM).orElseThrow(() -> new InvalidDataException("Expected Item"));
 
         String requirementString = data.getString(REQUIREMENTS).orElse("");
@@ -99,8 +96,7 @@ public class VirtualChestItem
             VirtualChestActionDispatcher secondaryAction,
             VirtualChestActionDispatcher primaryShiftAction,
             VirtualChestActionDispatcher secondaryShiftAction,
-            List<String> ignoredPermissions)
-    {
+            List<String> ignoredPermissions) {
         this.plugin = plugin;
         this.serializer = new VirtualChestItemStackSerializer(plugin);
 
@@ -113,58 +109,45 @@ public class VirtualChestItem
         this.ignoredPermissions = ignoredPermissions;
     }
 
-    public static List<DataView> getViewListOrSingletonList(DataQuery key, DataView view)
-    {
+    public static List<DataView> getViewListOrSingletonList(DataQuery key, DataView view) {
         Optional<List<?>> listOptional = view.getList(key);
-        if (!listOptional.isPresent())
-        {
+        if (!listOptional.isPresent()) {
             return view.getView(key).map(Collections::singletonList).orElseGet(Collections::emptyList);
         }
         ImmutableList.Builder<DataView> builder = ImmutableList.builder();
-        for (Object data : listOptional.get())
-        {
+        for (Object data : listOptional.get()) {
             DataContainer container = SpongeUnimplemented.newDataContainer(DataView.SafetyMode.NO_DATA_CLONED);
             container.set(key, data).getView(key).ifPresent(builder::add);
         }
         return builder.build();
     }
 
-    public void fillInventory(Player player, Inventory inventory, int index, String name)
-    {
-        try (Timing ignored = VirtualChestTimings.setItemInInventory(name, index).startTiming())
-        {
+    public void fillInventory(Player player, Inventory inventory, int index, String name) {
+        try (Timing ignored = VirtualChestTimings.setItemInInventory(name, index).startTiming()) {
             inventory.set(this.serializer.apply(player, this.serializedStack));
-        }
-        catch (InvalidDataException e)
-        {
+        } catch (InvalidDataException e) {
             String posString = VirtualChestInventory.slotIndexToKey(index);
             throw new InvalidDataException("Find error when generating item at " + posString, e);
         }
     }
 
-    public boolean matchRequirements(Player player, int index, String name)
-    {
-        try (Timing ignored = VirtualChestTimings.checkRequirements(name, index).startTiming())
-        {
+    public boolean matchRequirements(Player player, int index, String name) {
+        try (Timing ignored = VirtualChestTimings.checkRequirements(name, index).startTiming()) {
             return this.plugin.getScriptManager().execute(player, this.requirements);
         }
     }
 
-    public Optional<VirtualChestActionDispatcher> getAction(VirtualChestInventory.ClickStatus status)
-    {
-        if (status.isPrimary)
-        {
+    public Optional<VirtualChestActionDispatcher> getAction(VirtualChestInventory.ClickStatus status) {
+        if (status.isPrimary) {
             return status.isShift ? Optional.of(this.primaryShiftAction) : Optional.of(this.primaryAction);
         }
-        if (status.isSecondary)
-        {
+        if (status.isSecondary) {
             return status.isShift ? Optional.of(this.secondaryShiftAction) : Optional.of(this.secondaryAction);
         }
         return Optional.empty();
     }
 
-    public List<String> getIgnoredPermissions()
-    {
+    public List<String> getIgnoredPermissions() {
         return this.ignoredPermissions;
     }
 

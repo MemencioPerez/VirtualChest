@@ -44,8 +44,7 @@ import java.util.function.BiFunction;
 /**
  * @author ustc_zzzz
  */
-public class VirtualChestItemStackSerializer implements BiFunction<Player, DataView, ItemStack>
-{
+public class VirtualChestItemStackSerializer implements BiFunction<Player, DataView, ItemStack> {
     private static final Set<DataQuery> EXCEPTIONS;
     private static final TextSerializer TEXT_SERIALIZER = new TextSerializer();
     private static final GameProfileSerializer GAME_PROFILE_SERIALIZER = new GameProfileSerializer();
@@ -54,17 +53,14 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
 
     private static final Map<DataQuery, Key<?>> KEYS;
 
-    static
-    {
+    static {
         EXCEPTIONS = ImmutableSet.of(DataQuery.of("UnsafeData"), DataQuery.of("Data"),
                 DataQuery.of("Count"), DataQuery.of("ItemType"), DataQuery.of("UnsafeDamage"));
     }
 
-    static
-    {
+    static {
         Map<DataQuery, Key<?>> keys = new LinkedHashMap<>();
-        for (Key<?> key : Sponge.getRegistry().getAllOf(Key.class))
-        {
+        for (Key<?> key : Sponge.getRegistry().getAllOf(Key.class)) {
             DataQuery query = key.getQuery();
             Key<?> keyPrevious = keys.get(query);
             if (Objects.isNull(keyPrevious) || !keyPrevious.getId().startsWith("sponge:")) // f**king duplicate queries
@@ -78,8 +74,7 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
     private final TypeSerializerCollection serializers;
     private final VirtualChestPlugin plugin;
 
-    VirtualChestItemStackSerializer(VirtualChestPlugin plugin)
-    {
+    VirtualChestItemStackSerializer(VirtualChestPlugin plugin) {
         this.plugin = plugin;
         this.serializers = TypeSerializers.getDefaultSerializers().newChild()
                 .registerType(TypeToken.of(Text.class), TEXT_SERIALIZER)
@@ -88,59 +83,42 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
     }
 
     private <T, U extends BaseValue<T>> void deserializeForKeys(
-            ConfigurationNode node, DataQuery dataQuery, BiConsumer<Key<U>, T> consumer) throws InvalidDataException
-    {
-        if (KEYS.containsKey(dataQuery))
-        {
-            try
-            {
+            ConfigurationNode node, DataQuery dataQuery, BiConsumer<Key<U>, T> consumer) throws InvalidDataException {
+        if (KEYS.containsKey(dataQuery)) {
+            try {
                 @SuppressWarnings("unchecked")
                 Key<U> key = (Key<U>) KEYS.get(dataQuery);
                 @SuppressWarnings("unchecked")
                 TypeToken<T> elementToken = (TypeToken<T>) key.getElementToken();
                 consumer.accept(key, Optional.ofNullable(node.getValue(elementToken))
                         .orElseThrow(() -> new InvalidDataException("No value present")));
-            }
-            catch (ObjectMappingException e)
-            {
+            } catch (ObjectMappingException e) {
                 throw new InvalidDataException(e);
             }
-        }
-        else if (!EXCEPTIONS.contains(dataQuery))
-        {
+        } else if (!EXCEPTIONS.contains(dataQuery)) {
             throw new InvalidDataException("No matched query present");
         }
     }
 
-    private ConfigurationNode convertToConfigurationNode(DataView view)
-    {
+    private ConfigurationNode convertToConfigurationNode(DataView view) {
         ConfigurationOptions configurationOptions = ConfigurationOptions.defaults().setSerializers(this.serializers);
         Map<?, ?> values = view.getMap(DataQuery.of()).orElseThrow(InvalidDataException::new);
         return SimpleConfigurationNode.root(configurationOptions).setValue(values);
     }
 
-    private ConfigurationNode applyPlaceholders(Player player, ConfigurationNode node)
-    {
-        if (node.hasListChildren())
-        {
-            for (ConfigurationNode child : node.getChildrenList())
-            {
+    private ConfigurationNode applyPlaceholders(Player player, ConfigurationNode node) {
+        if (node.hasListChildren()) {
+            for (ConfigurationNode child : node.getChildrenList()) {
                 this.applyPlaceholders(player, child);
             }
-        }
-        else if (node.hasMapChildren())
-        {
-            for (ConfigurationNode child : node.getChildrenMap().values())
-            {
+        } else if (node.hasMapChildren()) {
+            for (ConfigurationNode child : node.getChildrenMap().values()) {
                 this.applyPlaceholders(player, child);
             }
-        }
-        else
-        {
+        } else {
             String value = node.getString("");
             String newValue = this.plugin.getPlaceholderManager().parseText(player, value);
-            if (!value.equals(newValue))
-            {
+            if (!value.equals(newValue)) {
                 node.setValue(newValue);
             }
         }
@@ -148,38 +126,28 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
     }
 
     @Override
-    public ItemStack apply(Player player, DataView view) throws InvalidDataException
-    {
+    public ItemStack apply(Player player, DataView view) throws InvalidDataException {
         return this.deserializeItemFrom(this.applyPlaceholders(player, view));
     }
 
-    private ConfigurationNode applyPlaceholders(Player player, DataView view)
-    {
-        try (Timing ignored = VirtualChestTimings.applyPlaceholders().startTiming())
-        {
+    private ConfigurationNode applyPlaceholders(Player player, DataView view) {
+        try (Timing ignored = VirtualChestTimings.applyPlaceholders().startTiming()) {
             return this.applyPlaceholders(player, this.convertToConfigurationNode(view));
-        }
-        catch (InvalidDataException e)
-        {
+        } catch (InvalidDataException e) {
             throw e;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new InvalidDataException(e);
         }
     }
 
-    private ItemStack deserializeItemFrom(ConfigurationNode node)
-    {
-        try (Timing ignored = VirtualChestTimings.deserializeItem().startTiming())
-        {
+    private ItemStack deserializeItemFrom(ConfigurationNode node) {
+        try (Timing ignored = VirtualChestTimings.deserializeItem().startTiming()) {
             ItemStack stack;
 
             Object byteItems = plugin.getByteItemsService();
             String itemTypeString = node.getNode("ItemType").getString("");
 
-            if (byteItems != null && itemTypeString.startsWith(((ByteItemsService) byteItems).getPrefix()))
-            {
+            if (byteItems != null && itemTypeString.startsWith(((ByteItemsService) byteItems).getPrefix())) {
                 stack = ((ByteItemsService) byteItems)
                         .get(itemTypeString)
                         .orElseThrow(() -> new IllegalArgumentException("Cannot find ByteItem '" + itemTypeString + "'!"))
@@ -187,71 +155,52 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
 
                 int count = node.getNode("Count").getInt(0);
                 // if an explicit quantity is given, overwrite the quantity ByteItems gave us
-                if (count > 1)
-                {
+                if (count > 1) {
                     stack.setQuantity(count);
                 }
-            }
-            else
-            {
+            } else {
                 stack = Objects.requireNonNull(node.getValue(TypeToken.of(ItemStack.class)));
             }
-            for (Map.Entry<Object, ? extends ConfigurationNode> entry : node.getChildrenMap().entrySet())
-            {
-                try
-                {
+            for (Map.Entry<Object, ? extends ConfigurationNode> entry : node.getChildrenMap().entrySet()) {
+                try {
                     this.deserializeForKeys(entry.getValue(), DataQuery.of(entry.getKey().toString()), (key, data) ->
                     {
                         DataTransactionResult result = stack.offer(key, data);
-                        if (!result.isSuccessful())
-                        {
+                        if (!result.isSuccessful()) {
                             throw new InvalidDataException();
                         }
                     });
-                }
-                catch (InvalidDataException e)
-                {
+                } catch (InvalidDataException e) {
                     String message = "Cannot apply field '" + entry.getKey() + "' to the item, ignore it.";
                     this.plugin.getLogger().warn(message, e);
                 }
             }
             return stack;
-        }
-        catch (InvalidDataException e)
-        {
+        } catch (InvalidDataException e) {
             throw e;
-        }
-        catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new InvalidDataException(e);
         }
     }
 
-    private static final class TextSerializer implements TypeSerializer<Text>
-    {
+    private static final class TextSerializer implements TypeSerializer<Text> {
         @Override
-        public Text deserialize(TypeToken<?> t, ConfigurationNode value) throws ObjectMappingException
-        {
+        public Text deserialize(TypeToken<?> t, ConfigurationNode value) throws ObjectMappingException {
             String string = value.getString();
             return string == null ? null : TextSerializers.FORMATTING_CODE.deserialize(string);
         }
 
         @Override
-        public void serialize(TypeToken<?> t, Text o, ConfigurationNode value) throws ObjectMappingException
-        {
-            if (o != null)
-            {
+        public void serialize(TypeToken<?> t, Text o, ConfigurationNode value) throws ObjectMappingException {
+            if (o != null) {
                 value.setValue(TextSerializers.FORMATTING_CODE.serialize(o));
             }
         }
     }
 
-    private static final class ItemEnchantmentSerializer implements TypeSerializer<Object>
-    {
-        private Optional<Object> deserializeItemEnchantment(String s)
-        {
-            try
-            {
+    private static final class ItemEnchantmentSerializer implements TypeSerializer<Object> {
+        private Optional<Object> deserializeItemEnchantment(String s) {
+            try {
                 int colonFirst = s.indexOf(':'), colonIndex = s.lastIndexOf(':');
                 String enchantmentId = colonFirst == colonIndex ? s : s.substring(0, colonIndex);
                 int enchantmentLevel = colonFirst == colonIndex ? 1 : Coerce.toInteger(s.substring(colonIndex + 1));
@@ -260,28 +209,23 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
                 node.getNode(Queries.ENCHANTMENT_ID.toString()).setValue(enchantmentId);
                 node.getNode(Queries.LEVEL.toString()).setValue(enchantmentLevel);
                 return Optional.ofNullable(node.getValue(ITEM_ENCHANTMENT));
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 return Optional.empty();
             }
         }
 
         @Override
-        public Object deserialize(TypeToken<?> t, ConfigurationNode value) throws ObjectMappingException
-        {
+        public Object deserialize(TypeToken<?> t, ConfigurationNode value) throws ObjectMappingException {
             return Optional.ofNullable(value.getString()).flatMap(this::deserializeItemEnchantment).orElse(null);
         }
 
         @Override
-        public void serialize(TypeToken<?> type, Object obj, ConfigurationNode value) throws ObjectMappingException
-        {
+        public void serialize(TypeToken<?> type, Object obj, ConfigurationNode value) throws ObjectMappingException {
             throw new ObjectMappingException(new UnsupportedOperationException());
         }
     }
 
-    private static final class GameProfileSerializer implements TypeSerializer<GameProfile>
-    {
+    private static final class GameProfileSerializer implements TypeSerializer<GameProfile> {
         private static final String KEY_UUID = "UUID";
         private static final String KEY_NAME = "Name";
         private static final boolean IS_ONLINE_MODE_ENABLED = Sponge.getServer().getOnlineMode();
@@ -289,8 +233,7 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
 
         private final Optional<GameProfile> nullProfile = getNullGameProfile();
 
-        private Optional<GameProfile> getNullGameProfile()
-        {
+        private Optional<GameProfile> getNullGameProfile() {
             // noinspection ConstantConditions
             return ItemStack.builder()
                     .itemType(ItemTypes.SKULL).quantity(1)
@@ -298,50 +241,37 @@ public class VirtualChestItemStackSerializer implements BiFunction<Player, DataV
                     .getOrCreate(RepresentedPlayerData.class).map(data -> data.owner().get());
         }
 
-        private static GameProfile getFilledGameProfileOrElseFallback(GameProfile profile)
-        {
-            if (!IS_ONLINE_MODE_ENABLED)
-            {
+        private static GameProfile getFilledGameProfileOrElseFallback(GameProfile profile) {
+            if (!IS_ONLINE_MODE_ENABLED) {
                 return profile; // TODO: maybe we should also load player skins in offline mode
             }
-            try
-            {
+            try {
                 return GAME_PROFILE_MANAGER.fill(profile).get(50, TimeUnit.MILLISECONDS); // TODO: asynchronous action
-            }
-            catch (InterruptedException | ExecutionException | TimeoutException e)
-            {
+            } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 return profile;
             }
         }
 
-        private static UUID getUUIDByString(String uuidString) throws ObjectMappingException
-        {
-            try
-            {
+        private static UUID getUUIDByString(String uuidString) throws ObjectMappingException {
+            try {
                 return UUID.fromString(uuidString);
-            }
-            catch (IllegalArgumentException e)
-            {
+            } catch (IllegalArgumentException e) {
                 throw new ObjectMappingException("Invalid UUID string: " + uuidString);
             }
         }
 
         @Override
-        public GameProfile deserialize(TypeToken<?> type, ConfigurationNode value) throws ObjectMappingException
-        {
+        public GameProfile deserialize(TypeToken<?> type, ConfigurationNode value) throws ObjectMappingException {
             String name = value.getNode(KEY_NAME).getString(), uuid = value.getNode(KEY_UUID).getString();
-            if (Objects.isNull(uuid))
-            {
+            if (Objects.isNull(uuid)) {
                 return this.nullProfile.orElseThrow(() -> new ObjectMappingException("Empty profile is not allowed"));
             }
             return getFilledGameProfileOrElseFallback(GameProfile.of(getUUIDByString(uuid), name));
         }
 
         @Override
-        public void serialize(TypeToken<?> type, GameProfile p, ConfigurationNode value) throws ObjectMappingException
-        {
-            if (!Objects.isNull(p) && !(nullProfile.isPresent() && nullProfile.get().equals(p)))
-            {
+        public void serialize(TypeToken<?> type, GameProfile p, ConfigurationNode value) throws ObjectMappingException {
+            if (!Objects.isNull(p) && !(nullProfile.isPresent() && nullProfile.get().equals(p))) {
                 value.getNode(KEY_UUID).setValue(p.getUniqueId());
                 p.getName().ifPresent(name -> value.getNode(KEY_NAME).setValue(name));
             }

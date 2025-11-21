@@ -22,8 +22,7 @@ import java.util.Optional;
  * @author ustc_zzzz
  */
 @NonnullByDefault
-public class VirtualChestInventoryBuilder extends AbstractDataBuilder<VirtualChestInventory>
-{
+public class VirtualChestInventoryBuilder extends AbstractDataBuilder<VirtualChestInventory> {
     private final VirtualChestPlugin plugin;
 
     Text title = Text.of();
@@ -35,85 +34,69 @@ public class VirtualChestInventoryBuilder extends AbstractDataBuilder<VirtualChe
     Multimap<SlotIndex, VirtualChestItem> items = ArrayListMultimap.create();
     Optional<Integer> actionIntervalTick = Optional.empty();
 
-    public VirtualChestInventoryBuilder(VirtualChestPlugin plugin)
-    {
+    public VirtualChestInventoryBuilder(VirtualChestPlugin plugin) {
         super(VirtualChestInventory.class, 0);
         this.plugin = plugin;
     }
 
-    public VirtualChestInventoryBuilder title(Text title)
-    {
+    public VirtualChestInventoryBuilder title(Text title) {
         this.title = title;
         return this;
     }
 
-    public VirtualChestInventoryBuilder height(int height)
-    {
+    public VirtualChestInventoryBuilder height(int height) {
         this.height = height;
         return this;
     }
 
-    public VirtualChestInventoryBuilder item(SlotIndex pos, VirtualChestItem item)
-    {
+    public VirtualChestInventoryBuilder item(SlotIndex pos, VirtualChestItem item) {
         this.items.put(pos, item);
         return this;
     }
 
-    public VirtualChestInventoryBuilder updateIntervalTick(int updateIntervalTick)
-    {
+    public VirtualChestInventoryBuilder updateIntervalTick(int updateIntervalTick) {
         this.updateIntervalTick = updateIntervalTick;
         return this;
     }
 
-    public VirtualChestInventoryBuilder openActionCommand(String openActionCommand)
-    {
+    public VirtualChestInventoryBuilder openActionCommand(String openActionCommand) {
         this.openActionCommand = Optional.of(openActionCommand);
         return this;
     }
 
-    public VirtualChestInventoryBuilder closeActionCommand(String closeActionCommand)
-    {
+    public VirtualChestInventoryBuilder closeActionCommand(String closeActionCommand) {
         this.closeActionCommand = Optional.of(closeActionCommand);
         return this;
     }
 
-    public VirtualChestInventoryBuilder acceptableActionIntervalTick(int acceptableActionIntervalTick)
-    {
+    public VirtualChestInventoryBuilder acceptableActionIntervalTick(int acceptableActionIntervalTick) {
         this.actionIntervalTick = Optional.of(acceptableActionIntervalTick);
         return this;
     }
 
-    public VirtualChestInventoryBuilder triggerItem(VirtualChestTriggerItem triggerItem)
-    {
+    public VirtualChestInventoryBuilder triggerItem(VirtualChestTriggerItem triggerItem) {
         this.triggerItems.add(triggerItem);
         return this;
     }
 
-    public VirtualChestInventory build()
-    {
-        if (this.title.isEmpty())
-        {
+    public VirtualChestInventory build() {
+        if (this.title.isEmpty()) {
             throw new InvalidDataException("Expected title");
         }
-        if (this.height == 0)
-        {
+        if (this.height == 0) {
             throw new InvalidDataException("Expected height");
         }
         return new VirtualChestInventory(this.plugin, this);
     }
 
     @Override
-    protected Optional<VirtualChestInventory> buildContent(DataView view) throws InvalidDataException
-    {
+    protected Optional<VirtualChestInventory> buildContent(DataView view) throws InvalidDataException {
         this.items.clear();
-        for (DataQuery key : view.getKeys(false))
-        {
+        for (DataQuery key : view.getKeys(false)) {
             String keyString = key.toString();
-            if (keyString.startsWith(VirtualChestInventory.KEY_PREFIX))
-            {
+            if (keyString.startsWith(VirtualChestInventory.KEY_PREFIX)) {
                 SlotIndex slotIndex = SlotIndex.of(VirtualChestInventory.keyToSlotIndex(keyString));
-                for (DataView dataView : VirtualChestItem.getViewListOrSingletonList(key, view))
-                {
+                for (DataView dataView : VirtualChestItem.getViewListOrSingletonList(key, view)) {
                     VirtualChestItem item = VirtualChestItem.deserialize(plugin, dataView);
                     this.items.put(slotIndex, item);
                 }
@@ -143,8 +126,7 @@ public class VirtualChestInventoryBuilder extends AbstractDataBuilder<VirtualChe
     }
 
     @Override
-    public VirtualChestInventoryBuilder from(VirtualChestInventory value)
-    {
+    public VirtualChestInventoryBuilder from(VirtualChestInventory value) {
         this.title = value.title;
         this.height = value.height;
         this.triggerItems.clear();
@@ -155,16 +137,14 @@ public class VirtualChestInventoryBuilder extends AbstractDataBuilder<VirtualChe
         this.actionIntervalTick = value.acceptableActionIntervalTick.isPresent()
                 ? Optional.of(value.acceptableActionIntervalTick.getAsInt()) : Optional.empty();
         this.items.clear();
-        for (int i = 0; i < value.items.size(); i++)
-        {
+        for (int i = 0; i < value.items.size(); i++) {
             this.items.putAll(SlotIndex.of(i), value.items.get(i));
         }
         return this;
     }
 
     @Override
-    public VirtualChestInventoryBuilder reset()
-    {
+    public VirtualChestInventoryBuilder reset() {
         this.height = 0;
         this.title = Text.of();
         this.updateIntervalTick = 0;

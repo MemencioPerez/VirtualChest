@@ -20,35 +20,28 @@ import java.util.concurrent.CompletableFuture;
  * @author ustc_zzzz
  */
 @NonnullByDefault
-public class VirtualChestPermissionManager implements ContextCalculator<Subject>
-{
+public class VirtualChestPermissionManager implements ContextCalculator<Subject> {
     private static final String CONTEXT_KEY = "virtualchest-action-uuid";
 
     private final VirtualChestPlugin plugin;
     private final Logger logger;
 
-    public VirtualChestPermissionManager(VirtualChestPlugin plugin)
-    {
+    public VirtualChestPermissionManager(VirtualChestPlugin plugin) {
         this.plugin = plugin;
         this.logger = plugin.getLogger();
     }
 
-    public void init()
-    {
+    public void init() {
         PermissionService permissionService = Sponge.getServiceManager().provideUnchecked(PermissionService.class);
-        if (SpongeUnimplemented.isPermissionServiceProvidedBySponge(permissionService))
-        {
+        if (SpongeUnimplemented.isPermissionServiceProvidedBySponge(permissionService)) {
             this.logger.warn("VirtualChest could not find the permission service. ");
             this.logger.warn("Features related to permissions may not work normally.");
-        }
-        else
-        {
+        } else {
             permissionService.registerContextCalculator(this);
         }
     }
 
-    public CompletableFuture<?> setIgnored(Player player, UUID actionUUID, Collection<String> permissions)
-    {
+    public CompletableFuture<?> setIgnored(Player player, UUID actionUUID, Collection<String> permissions) {
         SubjectData data = player.getTransientSubjectData();
         Set<Context> contexts = Collections.singleton(new Context(CONTEXT_KEY, actionUUID.toString()));
 
@@ -57,8 +50,7 @@ public class VirtualChestPermissionManager implements ContextCalculator<Subject>
                 .thenRun(() -> this.logIgnoredPermissionsAdded(permissions, actionUUID, player.getName()));
     }
 
-    public CompletableFuture<?> clearIgnored(Player player, UUID actionUUID)
-    {
+    public CompletableFuture<?> clearIgnored(Player player, UUID actionUUID) {
         SubjectData data = player.getTransientSubjectData();
         Set<Context> contexts = Collections.singleton(new Context(CONTEXT_KEY, actionUUID.toString()));
 
@@ -66,35 +58,29 @@ public class VirtualChestPermissionManager implements ContextCalculator<Subject>
                 .thenRun(() -> this.logIgnoredPermissionsCleared(actionUUID, player.getName()));
     }
 
-    private CompletableFuture<Boolean> clear(SubjectData data, Set<Context> contexts)
-    {
+    private CompletableFuture<Boolean> clear(SubjectData data, Set<Context> contexts) {
         return SpongeUnimplemented.clearPermissions(this.plugin, data, contexts);
     }
 
-    private CompletableFuture<Boolean> set(SubjectData data, Set<Context> contexts, String permission)
-    {
+    private CompletableFuture<Boolean> set(SubjectData data, Set<Context> contexts, String permission) {
         return SpongeUnimplemented.setPermission(this.plugin, data, contexts, permission);
     }
 
-    private CompletableFuture<?>[] set(SubjectData data, Set<Context> set, Collection<String> permissions)
-    {
+    private CompletableFuture<?>[] set(SubjectData data, Set<Context> set, Collection<String> permissions) {
         return permissions.stream().map(p -> this.set(data, set, p)).toArray(CompletableFuture[]::new);
     }
 
-    private void logIgnoredPermissionsAdded(Collection<String> permissions, UUID actionUUID, String name)
-    {
+    private void logIgnoredPermissionsAdded(Collection<String> permissions, UUID actionUUID, String name) {
         this.logger.debug("Ignored {} permission(s) for action {} (player {}):", permissions.size(), actionUUID, name);
         permissions.forEach(permission -> this.logger.debug("- {} (true)", permission));
     }
 
-    private void logIgnoredPermissionsCleared(UUID actionUUID, String name)
-    {
+    private void logIgnoredPermissionsCleared(UUID actionUUID, String name) {
         this.logger.debug("Cleared ignored permission(s) for action {} (player {}).", actionUUID, name);
     }
 
     @Override
-    public void accumulateContexts(Subject subject, Set<Context> accumulator)
-    {
+    public void accumulateContexts(Subject subject, Set<Context> accumulator) {
         this.plugin.getVirtualChestActions().getActivatedActions(subject.getIdentifier()).forEach(actionUUID ->
         {
             SubjectData data = subject.getTransientSubjectData();
@@ -107,18 +93,13 @@ public class VirtualChestPermissionManager implements ContextCalculator<Subject>
     }
 
     @Override
-    public boolean matches(Context context, Subject subject)
-    {
-        if (CONTEXT_KEY.equals(context.getKey()))
-        {
-            try
-            {
+    public boolean matches(Context context, Subject subject) {
+        if (CONTEXT_KEY.equals(context.getKey())) {
+            try {
                 UUID value = UUID.fromString(context.getValue());
                 VirtualChestActions actions = this.plugin.getVirtualChestActions();
                 return actions.getActivatedActions(subject.getIdentifier()).contains(value);
-            }
-            catch (IllegalArgumentException e)
-            {
+            } catch (IllegalArgumentException e) {
                 return false;
             }
         }

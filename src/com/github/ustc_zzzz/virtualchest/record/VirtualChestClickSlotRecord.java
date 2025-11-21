@@ -14,12 +14,10 @@ import java.util.UUID;
  */
 @IdName("submit_uuid")
 @Table(VirtualChestRecordManager.SLOT_CLICK_RECORD)
-public class VirtualChestClickSlotRecord extends Model
-{
+public class VirtualChestClickSlotRecord extends Model {
     private static final long serialVersionUID = 1L;
 
-    VirtualChestClickSlotRecord(UUID uuid, String menuName, int menuSlot, VirtualChestInventory.ClickStatus s, Player p)
-    {
+    VirtualChestClickSlotRecord(UUID uuid, String menuName, int menuSlot, VirtualChestInventory.ClickStatus s, Player p) {
         this.set("submit_time", new Date());
         this.set("submit_uuid", uuid.toString());
         this.set("menu_name", menuName).set("menu_slot", menuSlot);

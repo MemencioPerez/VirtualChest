@@ -32,8 +32,7 @@ import java.util.stream.Stream;
 /**
  * @author ustc_zzzz
  */
-public class VirtualChestActionDispatcher
-{
+public class VirtualChestActionDispatcher {
     private static final DataQuery KEEP_INVENTORY_OPEN = DataQuery.of("KeepInventoryOpen");
     private static final DataQuery HANDHELD_ITEM = DataQuery.of("HandheldItem");
 
@@ -54,8 +53,7 @@ public class VirtualChestActionDispatcher
 
     private final int size;
 
-    public VirtualChestActionDispatcher(List<DataView> views)
-    {
+    public VirtualChestActionDispatcher(List<DataView> views) {
         this.size = views.size();
 
         ImmutableList.Builder<VirtualChestHandheldItem> handheldItemBuilder = ImmutableList.builder();
@@ -67,8 +65,7 @@ public class VirtualChestActionDispatcher
 
         ImmutableList.Builder<DataContainer> dataContainerBuilder = ImmutableList.builder();
 
-        for (DataView view : views)
-        {
+        for (DataView view : views) {
             handheldItemBuilder.add(this.parseHandheldItem(view));
             keepInventoryOpenBuilder.add(view.getBoolean(KEEP_INVENTORY_OPEN).orElse(false));
 
@@ -90,8 +87,7 @@ public class VirtualChestActionDispatcher
     }
 
     public Tuple<Boolean, CompletableFuture<CommandResult>> runCommand(VirtualChestPlugin plugin,
-                                                                       UUID actionUUID, Player player, boolean record)
-    {
+                                                                       UUID actionUUID, Player player, boolean record) {
         ItemStackSnapshot handheldItem = SpongeUnimplemented.getItemHeldByMouse(player);
         boolean isSomeoneSearchingInventory = false; // check if I should go for step 2
         boolean[] areSearchingInventory = new boolean[this.size]; // caches for step 2
@@ -104,14 +100,11 @@ public class VirtualChestActionDispatcher
                 int size = SpongeUnimplemented.getCount(handheldItem);
                 if (isSearchingInventory) // search inventory to calculate total count
                 {
-                    for (Slot slot : player.getInventory().<Slot>slots())
-                    {
+                    for (Slot slot : player.getInventory().<Slot>slots()) {
                         Optional<ItemStack> stackOptional = slot.peek();
-                        if (stackOptional.isPresent())
-                        {
+                        if (stackOptional.isPresent()) {
                             ItemStackSnapshot stackSnapshot = stackOptional.get().createSnapshot();
-                            if (itemTemplate.matchItem(stackSnapshot))
-                            {
+                            if (itemTemplate.matchItem(stackSnapshot)) {
                                 size += SpongeUnimplemented.getCount(stackSnapshot);
                             }
                         }
@@ -132,8 +125,7 @@ public class VirtualChestActionDispatcher
                     return Tuple.of(this.keepInventoryOpen.get(i), actions.submitCommands(player, stream, map, record));
                 }
                 areSearchingInventory[i] = false; // otherwise do not search inventory for it in step 2
-            }
-            else // if it does not match, search inventory in step 2 if user requests
+            } else // if it does not match, search inventory in step 2 if user requests
             {
                 areSearchingInventory[i] = isSearchingInventory;
                 isSomeoneSearchingInventory = isSomeoneSearchingInventory || isSearchingInventory;
@@ -142,20 +134,15 @@ public class VirtualChestActionDispatcher
         if (isSomeoneSearchingInventory) // step 2: search inventory if no one matches the handheld item
         {
             int[] searchCounts = new int[this.size];
-            for (Slot slot : player.getInventory().<Slot>slots())
-            {
+            for (Slot slot : player.getInventory().<Slot>slots()) {
                 Optional<ItemStack> stackOptional = slot.peek();
-                if (stackOptional.isPresent())
-                {
+                if (stackOptional.isPresent()) {
                     ItemStackSnapshot stackSnapshot = stackOptional.get().createSnapshot();
                     int stackQuantity = SpongeUnimplemented.getCount(stackSnapshot); // count for this slot
-                    for (int i = 0; i < this.size; ++i)
-                    {
-                        if (areSearchingInventory[i])
-                        {
+                    for (int i = 0; i < this.size; ++i) {
+                        if (areSearchingInventory[i]) {
                             VirtualChestHandheldItem itemTemplate = this.handheldItem.get(i);
-                            if (itemTemplate.matchItem(stackSnapshot))
-                            {
+                            if (itemTemplate.matchItem(stackSnapshot)) {
                                 searchCounts[i] += stackQuantity;
                             }
                         }
@@ -186,8 +173,7 @@ public class VirtualChestActionDispatcher
         return Tuple.of(Boolean.TRUE, CompletableFuture.completedFuture(CommandResult.success()));
     }
 
-    private static ClassToInstanceMap<Context> getContextMap(UUID actionUUID, Player player, VirtualChestHandheldItem itemTemplate)
-    {
+    private static ClassToInstanceMap<Context> getContextMap(UUID actionUUID, Player player, VirtualChestHandheldItem itemTemplate) {
         ImmutableClassToInstanceMap.Builder<Context> contextBuilder = ImmutableClassToInstanceMap.builder();
 
         contextBuilder.put(Context.HANDHELD_ITEM, new HandheldItemContext(itemTemplate::matchItem));
@@ -197,46 +183,36 @@ public class VirtualChestActionDispatcher
         return contextBuilder.build();
     }
 
-    public Optional<?> getObjectForSerialization()
-    {
-        switch (this.size)
-        {
-        case 0:
-            return Optional.empty();
-        case 1:
-            return Optional.of(this.views.iterator().next());
-        default:
-            return Optional.of(this.views);
+    public Optional<?> getObjectForSerialization() {
+        switch (this.size) {
+            case 0:
+                return Optional.empty();
+            case 1:
+                return Optional.of(this.views.iterator().next());
+            default:
+                return Optional.of(this.views);
         }
     }
 
-    private VirtualChestHandheldItem parseHandheldItem(DataView view)
-    {
+    private VirtualChestHandheldItem parseHandheldItem(DataView view) {
         return view.getView(HANDHELD_ITEM).map(VirtualChestHandheldItem::new).orElse(VirtualChestHandheldItem.DEFAULT);
     }
 
-    public static List<String> parseCommand(String commandSequence)
-    {
+    public static List<String> parseCommand(String commandSequence) {
         StringBuilder stringBuilder = new StringBuilder();
         List<String> commands = new LinkedList<>();
         Tristate isCommandFinished = Tristate.TRUE;
-        for (char c : commandSequence.toCharArray())
-        {
-            if (c != SEQUENCE_SPLITTER)
-            {
-                if (isCommandFinished == Tristate.UNDEFINED)
-                {
+        for (char c : commandSequence.toCharArray()) {
+            if (c != SEQUENCE_SPLITTER) {
+                if (isCommandFinished == Tristate.UNDEFINED) {
                     commands.add(stringBuilder.toString());
                     stringBuilder.setLength(0);
                 }
-                if (isCommandFinished != Tristate.FALSE && Character.isWhitespace(c))
-                {
+                if (isCommandFinished != Tristate.FALSE && Character.isWhitespace(c)) {
                     isCommandFinished = Tristate.TRUE;
                     continue;
                 }
-            }
-            else if (isCommandFinished != Tristate.UNDEFINED)
-            {
+            } else if (isCommandFinished != Tristate.UNDEFINED) {
                 isCommandFinished = Tristate.UNDEFINED;
                 continue;
             }

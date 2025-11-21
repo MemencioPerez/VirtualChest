@@ -59,8 +59,7 @@ import java.util.Optional;
                 @Dependency(id = "byte-items", version = "[2.3,)", optional = true)
         },
         authors = {"ustc_zzzz"}, version = VirtualChestPlugin.VERSION, description = VirtualChestPlugin.DESCRIPTION)
-public class VirtualChestPlugin
-{
+public class VirtualChestPlugin {
     public static final String VERSION = "@version@";
     public static final String PLUGIN_ID = "virtualchest";
     public static final String DESCRIPTION = "A sponge plugin providing virtual chest GUIs for menus.";
@@ -114,8 +113,7 @@ public class VirtualChestPlugin
 
     private boolean doCheckUpdate = true;
 
-    private void loadConfig() throws IOException
-    {
+    private void loadConfig() throws IOException {
         CommentedConfigurationNode root = config.load();
 
         this.update.loadConfig(root.getNode(PLUGIN_ID, "check-update"));
@@ -127,8 +125,7 @@ public class VirtualChestPlugin
         this.rootConfigNode = root;
     }
 
-    private void saveConfig() throws IOException
-    {
+    private void saveConfig() throws IOException {
         CommentedConfigurationNode root = Optional.ofNullable(this.rootConfigNode).orElseGet(config::createEmptyNode);
 
         this.update.saveConfig(root.getNode(PLUGIN_ID, "check-update"));
@@ -141,57 +138,45 @@ public class VirtualChestPlugin
     }
 
     @Listener(order = Order.EARLY)
-    public void onInteractItemPrimary(InteractItemEvent.Primary event, @First Player player)
-    {
+    public void onInteractItemPrimary(InteractItemEvent.Primary event, @First Player player) {
         String name = "";
-        for (String inventoryName : this.dispatcher.ids())
-        {
-            if (player.hasPermission("virtualchest.open.self." + inventoryName))
-            {
-                if (this.dispatcher.isInventoryMatchingPrimaryAction(inventoryName, event.getItemStack()))
-                {
+        for (String inventoryName : this.dispatcher.ids()) {
+            if (player.hasPermission("virtualchest.open.self." + inventoryName)) {
+                if (this.dispatcher.isInventoryMatchingPrimaryAction(inventoryName, event.getItemStack())) {
                     event.setCancelled(true);
                     name = inventoryName;
                     break;
                 }
             }
         }
-        if (!name.isEmpty())
-        {
+        if (!name.isEmpty()) {
             this.logger.debug("Player {} tries to create the GUI ({}) by primary action", player.getName(), name);
             this.dispatcher.open(name, player);
         }
     }
 
     @Listener(order = Order.EARLY)
-    public void onInteractItemSecondary(InteractItemEvent.Secondary event, @First Player player)
-    {
+    public void onInteractItemSecondary(InteractItemEvent.Secondary event, @First Player player) {
         String name = "";
-        for (String inventoryName : this.dispatcher.ids())
-        {
-            if (player.hasPermission("virtualchest.open.self." + inventoryName))
-            {
-                if (this.dispatcher.isInventoryMatchingSecondaryAction(inventoryName, event.getItemStack()))
-                {
+        for (String inventoryName : this.dispatcher.ids()) {
+            if (player.hasPermission("virtualchest.open.self." + inventoryName)) {
+                if (this.dispatcher.isInventoryMatchingSecondaryAction(inventoryName, event.getItemStack())) {
                     event.setCancelled(true);
                     name = inventoryName;
                     break;
                 }
             }
         }
-        if (!name.isEmpty())
-        {
+        if (!name.isEmpty()) {
             this.logger.debug("Player {} tries to create the GUI ({}) by secondary action", player.getName(), name);
             this.dispatcher.open(name, player);
         }
     }
 
     @Listener
-    public void onClientConnectionJoin(ClientConnectionEvent.Join event)
-    {
+    public void onClientConnectionJoin(ClientConnectionEvent.Join event) {
         Server server = Sponge.getServer();
-        if (server.getOnlineMode())
-        {
+        if (server.getOnlineMode()) {
             // prefetch the profile when a player joins the server
             // TODO: maybe we should also prefetch player profiles in offline mode
             GameProfile profile = event.getTargetEntity().getProfile();
@@ -204,32 +189,26 @@ public class VirtualChestPlugin
     }
 
     @Listener
-    public void onReload(GameReloadEvent event)
-    {
-        try
-        {
+    public void onReload(GameReloadEvent event) {
+        try {
             MessageReceiver src = event.getCause().first(CommandSource.class).orElse(Sponge.getServer().getConsole());
             src.sendMessage(this.translation.take("virtualchest.reload.start"));
             this.loadConfig();
             this.saveConfig();
             src.sendMessage(this.translation.take("virtualchest.reload.finish"));
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
     @Listener
-    public void onPreInitialization(GamePreInitializationEvent event)
-    {
+    public void onPreInitialization(GamePreInitializationEvent event) {
         DataManager dataManager = Sponge.getDataManager();
         dataManager.registerBuilder(VirtualChestInventory.class, new VirtualChestInventoryBuilder(this));
     }
 
     @Listener
-    public void onPostInitialization(GamePostInitializationEvent event)
-    {
+    public void onPostInitialization(GamePostInitializationEvent event) {
         this.update = new VirtualChestPluginUpdate(this);
         this.translation = new VirtualChestTranslation(this);
         this.recordManager = new VirtualChestRecordManager(this);
@@ -243,15 +222,13 @@ public class VirtualChestPlugin
         this.virtualChestCommandManager = new VirtualChestCommandManager(this);
         this.actionIntervalManager = new VirtualChestActionIntervalManager(this);
 
-        if (Sponge.getPluginManager().getPlugin("byte-items").isPresent())
-        {
+        if (Sponge.getPluginManager().getPlugin("byte-items").isPresent()) {
             byteItemsService = Sponge.getServiceManager().provide(ByteItemsService.class).get();
         }
     }
 
     @Listener
-    public void onStartingServer(GameStartingServerEvent event)
-    {
+    public void onStartingServer(GameStartingServerEvent event) {
         this.recordManager.init();
         this.virtualChestCommandManager.init();
         this.economyManager.init();
@@ -260,24 +237,19 @@ public class VirtualChestPlugin
     }
 
     @Listener
-    public void onStartedServer(GameStartedServerEvent event)
-    {
-        try
-        {
+    public void onStartedServer(GameStartedServerEvent event) {
+        try {
             this.logger.info("Start loading config ...");
             this.loadConfig();
             this.saveConfig();
             this.logger.info("Loading config complete.");
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
         this.addMetricsInformation();
     }
 
-    private void addMetricsInformation()
-    {
+    private void addMetricsInformation() {
         PluginContainer p = Sponge.getPlatform().getContainer(Platform.Component.IMPLEMENTATION);
         this.metrics.addCustomChart(
                 new Metrics.SingleLineChart("onlineInventories",
@@ -290,64 +262,52 @@ public class VirtualChestPlugin
                         () -> ImmutableMap.of(p.getName(), ImmutableMap.of(p.getVersion().orElse("unknown"), 1))));
     }
 
-    public Logger getLogger()
-    {
+    public Logger getLogger() {
         return this.logger;
     }
 
-    public Path getConfigDir()
-    {
+    public Path getConfigDir() {
         return this.configDir;
     }
 
-    public VirtualChestTranslation getTranslation()
-    {
+    public VirtualChestTranslation getTranslation() {
         return this.translation;
     }
 
-    public VirtualChestRecordManager getRecordManager()
-    {
+    public VirtualChestRecordManager getRecordManager() {
         return this.recordManager;
     }
 
-    public VirtualChestActions getVirtualChestActions()
-    {
+    public VirtualChestActions getVirtualChestActions() {
         return this.virtualChestActions;
     }
 
-    public VirtualChestEconomyManager getEconomyManager()
-    {
+    public VirtualChestEconomyManager getEconomyManager() {
         return this.economyManager;
     }
 
-    public VirtualChestInventoryDispatcher getDispatcher()
-    {
+    public VirtualChestInventoryDispatcher getDispatcher() {
         return this.dispatcher;
     }
 
-    public VirtualChestJavaScriptManager getScriptManager()
-    {
+    public VirtualChestJavaScriptManager getScriptManager() {
         return this.scriptManager;
     }
 
-    public VirtualChestPermissionManager getPermissionManager()
-    {
+    public VirtualChestPermissionManager getPermissionManager() {
         return this.permissionManager;
     }
 
-    public VirtualChestPlaceholderManager getPlaceholderManager()
-    {
+    public VirtualChestPlaceholderManager getPlaceholderManager() {
         return this.placeholderManager;
     }
 
-    public VirtualChestActionIntervalManager getActionIntervalManager()
-    {
+    public VirtualChestActionIntervalManager getActionIntervalManager() {
         return this.actionIntervalManager;
     }
 
     @Nullable
-    public Object getByteItemsService()
-    {
+    public Object getByteItemsService() {
         return byteItemsService;
     }
 }
